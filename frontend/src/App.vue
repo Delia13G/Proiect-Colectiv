@@ -19,6 +19,7 @@ onMounted(async () => {
       <h1 style="color: #42b883; line-height: 1.5; margin: 0; font-size: 28px;">
         {{ mesaj }}
       </h1>
+      <h2>Salut, sunt Ioana!</h2>
     </div>
   </main>
 </template>
