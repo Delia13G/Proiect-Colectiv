@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 
 const mesaj = ref('Se încarcă datele din backend...')
 const Adrian = ref('Adrian')
+const Andrei = ref('Andrei')
 
 onMounted(async () => {
   try {
@@ -22,6 +23,9 @@ onMounted(async () => {
       </h1>
       <p style="color: #ffffff; margin-top: 20px; font-size: 20px;">
         Acest proiect este făcut de {{ Adrian }}
+      </p>
+      <p style="color: #ffffff; margin-top: 10px; font-size: 20px;">
+        Acest proiect este făcut și de {{ Andrei }}.
       </p>
     </div>
   </main>
