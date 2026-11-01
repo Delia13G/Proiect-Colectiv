@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 
 const mesaj = ref('Se încarcă datele din backend...')
-
+const Pavel = ref('Pavel')
 onMounted(async () => {
   try {
    const raspuns = await fetch('/api/test')
@@ -19,6 +19,10 @@ onMounted(async () => {
       <h1 style="color: #42b883; line-height: 1.5; margin: 0; font-size: 28px;">
         {{ mesaj }}
       </h1>
+      <!-- 2. Am adăugat un paragraf nou aici pentru a afișa numele -->
+      <p style="color: #ffffff; margin-top: 20px; font-size: 20px;">
+        Acest proiect este făcut de {{ Pavel }}
+      </p>
     </div>
   </main>
 </template>
