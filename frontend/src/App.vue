@@ -5,6 +5,7 @@ const mesaj = ref('Se încarcă datele din backend...')
 const andreea = ref('Andreea')
 const Adrian = ref('Adrian')
 const Andrei = ref('Andrei')
+const Pavel = ref('Pavel')
 
 onMounted(async () => {
   try {
@@ -30,6 +31,10 @@ onMounted(async () => {
       </p>
       <p style="color: #ffffff; margin-top: 10px; font-size: 20px;">
         Acest proiect este făcut și de {{ Andrei }}.
+      </p>
+
+      <p style="color: #ffffff; margin-top: 10px; font-size: 20px;">
+        Acest proiect este făcut și de {{ Pavel }}😊.
       </p>
     </div>
   </main>
