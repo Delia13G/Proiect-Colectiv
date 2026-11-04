@@ -1,45 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-
-const mesaj = ref('Se încarcă datele din backend...')
-const andreea = ref('Andreea')
-const Adrian = ref('Adrian')
-const Andrei = ref('Andrei')
-const Pavel = ref('Pavel')
-const Olesia = ref('Olesia')
-
-onMounted(async () => {
-  try {
-   const raspuns = await fetch('/api/test')
-    mesaj.value = await raspuns.text()
-  } catch (eroare) {
-    mesaj.value = 'Eroare de conexiune cu serverul Quarkus.'
-  }
-})
 </script>
 
 <template>
-  <main style="display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: sans-serif; background-color: #093454; padding: 20px;">
-    <div style="text-align: center; background-color: #2c2c2c; padding: 40px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); max-width: 600px;">
-      <h1 style="color: #42b883; line-height: 1.5; margin: 0; font-size: 28px;">
-        {{ mesaj }}
-      </h1>
-      <p style="color: #ffffff; margin-top: 20px; font-size: 18px;">
-        Salut, {{ andreea }}! Bine ai venit în aplicația noastră.
-        </p>
-      <p style="color: #ffffff; margin-top: 20px; font-size: 20px;">
-        Acest proiect este făcut de {{ Adrian }}
-      </p>
-      <p style="color: #ffffff; margin-top: 10px; font-size: 20px;">
-        Acest proiect este făcut și de {{ Andrei }}.
-      </p>
-
-      <p style="color: #ffffff; margin-top: 10px; font-size: 20px;">
-        Acest proiect este făcut și de {{ Pavel }}😊.
-      </p>
-      <p style="color: #ffffff; margin-top: 10px; font-size: 20px;">
-        Acest proiect este făcut și de {{ Olesia }}😍.
-      </p>
-    </div>
-  </main>
+  <router-view />
 </template>
+
+<style scoped>
+</style>
