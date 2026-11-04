@@ -6,6 +6,7 @@ const andreea = ref('Andreea')
 const Adrian = ref('Adrian')
 const Andrei = ref('Andrei')
 const Pavel = ref('Pavel')
+const Olesia = ref('Olesia')
 
 onMounted(async () => {
   try {
@@ -35,6 +36,9 @@ onMounted(async () => {
 
       <p style="color: #ffffff; margin-top: 10px; font-size: 20px;">
         Acest proiect este făcut și de {{ Pavel }}😊.
+      </p>
+      <p style="color: #ffffff; margin-top: 10px; font-size: 20px;">
+        Acest proiect este făcut și de {{ Olesia }}😍.
       </p>
     </div>
   </main>
