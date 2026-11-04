@@ -11,6 +11,6 @@ public class TestResource {
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public String getTestMessage() {
-        return "test - conexiunea dintre Vue și Quarkus funcționează!";
+        return "test - conexiunea dintre Vue și Quarkus funcționează! -Ioana";
     }
 }
