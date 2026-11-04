@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import Button from 'primevue/button';
 
 const mesaj = ref('Se încarcă datele din backend...')
 const andreea = ref('Andreea')
@@ -40,6 +41,9 @@ onMounted(async () => {
       <p style="color: #ffffff; margin-top: 10px; font-size: 20px;">
         Acest proiect este făcut și de {{ Olesia }}😍.
       </p>
+      <div style="margin-top: 30px;">
+        <Button label="Verificare PrimeVue" icon="pi pi-check" />
+      </div>
     </div>
   </main>
 </template>
