@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+//import { useRouter } from 'vue-router'
 import { Eye, EyeOff, Loader2, AlertTriangle, Check } from 'lucide-vue-next'
 
 const email = ref('')
@@ -9,7 +9,7 @@ const showPassword = ref(false)
 const rememberMe = ref(false)
 const capsLockOn = ref(false)
 const isLoading = ref(false)
-const router = useRouter()
+//const router = useRouter()
 
 const emailError = ref('')
 const passwordError = ref('')
