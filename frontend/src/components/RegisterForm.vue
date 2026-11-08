@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+//import { useRouter } from 'vue-router'
 import { Eye, EyeOff, Loader2, AlertTriangle, Check, Circle, Info, Mail } from 'lucide-vue-next'
 import axios from 'axios'
 
@@ -19,7 +19,7 @@ const capsLockOn = ref(false)
 const isLoading = ref(false)
 const serverError = ref('')
 const isRegistered = ref(false) // Gestionează starea de succes
-const router = useRouter()
+//const router = useRouter()
 
 const touched = ref({
   firstName: false,
