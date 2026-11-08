@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-//import { useRouter } from 'vue-router'
-import { Eye, EyeOff, Loader2, AlertTriangle, Check } from 'lucide-vue-next'
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+import { Eye, EyeOff, Loader2, AlertTriangle, Check, AlertCircle } from 'lucide-vue-next'
 
 const email = ref('')
 const password = ref('')
@@ -9,10 +11,22 @@ const showPassword = ref(false)
 const rememberMe = ref(false)
 const capsLockOn = ref(false)
 const isLoading = ref(false)
-//const router = useRouter()
+
+const router = useRouter()
+const authStore = useAuthStore()
 
 const emailError = ref('')
 const passwordError = ref('')
+const serverError = ref('')
+
+// NEW: Încărcăm email-ul salvat când se montează componenta
+onMounted(() => {
+  const savedEmail = localStorage.getItem('rememberedEmail')
+  if (savedEmail) {
+    email.value = savedEmail
+    rememberMe.value = true
+  }
+})
 
 const checkCapsLock = (event: KeyboardEvent) => {
   capsLockOn.value = event.getModifierState('CapsLock')
@@ -22,6 +36,7 @@ const validateForm = () => {
   let isValid = true
   emailError.value = ''
   passwordError.value = ''
+  serverError.value = ''
 
   if (!email.value) {
     emailError.value = 'Email is required'
@@ -44,12 +59,50 @@ const handleLogin = async () => {
   if (!validateForm() || isLoading.value) return
   
   isLoading.value = true
+  serverError.value = ''
   
-  console.log('Autentificare inițiată:', { email: email.value, remember: rememberMe.value })
-  
-  setTimeout(() => {
+  try {
+    const response = await axios.post('http://localhost:8080/auth/login', {
+      email: email.value,
+      password: password.value,
+      rememberMe: rememberMe.value
+    })
+
+    console.log('Login successful')
+    
+    if (response.data && response.data.token) {
+      authStore.setToken(response.data.token)
+    }
+
+    // NEW: Salvăm sau ștergem email-ul din localStorage pe baza checkbox-ului
+    if (rememberMe.value) {
+      localStorage.setItem('rememberedEmail', email.value)
+    } else {
+      localStorage.removeItem('rememberedEmail')
+    }
+
+    router.push('/dashboard')
+    
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status
+      
+      if (status === 401) {
+        serverError.value = 'Invalid email or password.'
+      } else if (status === 404) {
+        serverError.value = 'User account not found.'
+      } else if (status === 500) {
+        serverError.value = 'Internal server error. Please try again later.'
+      } else {
+        serverError.value = 'A network error occurred. Please check your connection.'
+      }
+    } else {
+      serverError.value = 'An unexpected error occurred.'
+    }
+    console.error('Autentificare eșuată:', error)
+  } finally {
     isLoading.value = false
-  }, 1500)
+  }
 }
 
 const togglePassword = () => {
@@ -69,6 +122,14 @@ const togglePassword = () => {
         Enter your network
       </p>
     </div>
+
+    <!-- Alertă globală pentru erori de la backend -->
+    <transition enter-active-class="transition ease-out duration-300" enter-from-class="opacity-0 -translate-y-2" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition ease-in duration-200" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-2">
+      <div v-if="serverError" class="mb-6 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-start">
+        <AlertCircle class="w-5 h-5 text-rose-400 mr-2.5 flex-shrink-0 mt-0.5" />
+        <p class="text-sm text-rose-300">{{ serverError }}</p>
+      </div>
+    </transition>
 
     <form class="space-y-4 md:space-y-5" @submit.prevent="handleLogin" novalidate>
       
@@ -149,9 +210,9 @@ const togglePassword = () => {
           Remember me
         </label>
         
-        <a href="#" class="text-xs md:text-sm text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+        <router-link to="/forgot-password" class="text-xs md:text-sm text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
           Forgot password?
-        </a>
+        </router-link>
       </div>
 
       <!-- CTA Button -->

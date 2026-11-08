@@ -27,12 +27,11 @@ const handleMouseMove = (e: MouseEvent) => {
       :style="{ transform: `translate(${mouseX}px, ${mouseY}px)` }"
     >
       <div class="absolute top-[0%] left-[5%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] bg-indigo-600/40 rounded-full mix-blend-screen filter blur-[90px] md:blur-[130px] opacity-70 animate-blob"></div>
-      
       <div class="absolute top-[20%] right-[0%] w-[45vw] h-[45vw] max-w-[500px] max-h-[500px] bg-rose-600/40 rounded-full mix-blend-screen filter blur-[90px] md:blur-[130px] opacity-70 animate-blob animation-delay-2000"></div>
-      
       <div class="absolute bottom-[-10%] left-[20%] w-[55vw] h-[55vw] max-w-[700px] max-h-[700px] bg-emerald-600/30 rounded-full mix-blend-screen filter blur-[90px] md:blur-[130px] opacity-70 animate-blob animation-delay-4000"></div>
     </div>
 
+    <!-- Aici chemăm componenta formularului de login pe care ai făcut-o la PRO-25, 43, 44 -->
     <LoginForm />
     
   </main>
@@ -40,37 +39,14 @@ const handleMouseMove = (e: MouseEvent) => {
 
 <style scoped>
 @keyframes blob {
-  0% { 
-    transform: translate(0px, 0px) scale(1) rotate(0deg);
-    opacity: 0.6;
-  }
-  25% { 
-    transform: translate(80px, -80px) scale(1.15) rotate(45deg);
-    opacity: 0.9;
-  }
-  50% {
-    transform: translate(-40px, 60px) scale(0.9) rotate(90deg);
-    opacity: 0.5;
-  }
-  75% {
-    transform: translate(-100px, -40px) scale(1.05) rotate(135deg);
-    opacity: 0.8;
-  }
-  100% { 
-    transform: translate(0px, 0px) scale(1) rotate(180deg);
-    opacity: 0.6;
-  }
+  0% { transform: translate(0px, 0px) scale(1) rotate(0deg); opacity: 0.6; }
+  25% { transform: translate(80px, -80px) scale(1.15) rotate(45deg); opacity: 0.9; }
+  50% { transform: translate(-40px, 60px) scale(0.9) rotate(90deg); opacity: 0.5; }
+  75% { transform: translate(-100px, -40px) scale(1.05) rotate(135deg); opacity: 0.8; }
+  100% { transform: translate(0px, 0px) scale(1) rotate(180deg); opacity: 0.6; }
 }
 
-.animate-blob {
-  animation: blob 10s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.animation-delay-2000 {
-  animation-delay: 2s;
-}
-
-.animation-delay-4000 {
-  animation-delay: 4s;
-}
+.animate-blob { animation: blob 10s infinite alternate cubic-bezier(0.4, 0, 0.2, 1); }
+.animation-delay-2000 { animation-delay: 2s; }
+.animation-delay-4000 { animation-delay: 4s; }
 </style>
