@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Eye, EyeOff, Loader2, AlertTriangle, Check, Circle } from 'lucide-vue-next'
+import { Eye, EyeOff, Loader2, AlertTriangle, Check, Circle, Info, Mail } from 'lucide-vue-next'
 import axios from 'axios'
 
 const firstName = ref('')
 const lastName = ref('')
-const email = ref('')
+const personalEmail = ref('')
+const studentEmail = ref('')
 const phone = ref('')
 const password = ref('')
 const confirmPassword = ref('')
@@ -17,13 +18,15 @@ const acceptTerms = ref(false)
 const capsLockOn = ref(false)
 const isLoading = ref(false)
 const serverError = ref('')
+const isRegistered = ref(false) // Gestionează starea de succes
 const router = useRouter()
 
-// Urmărim dacă utilizatorul a interacționat cu câmpul
 const touched = ref({
   firstName: false,
   lastName: false,
-  email: false,
+  personalEmail: false,
+  studentEmail: false,
+  phone: false,
   password: false,
   confirmPassword: false,
   terms: false
@@ -34,6 +37,7 @@ const checkCapsLock = (event: KeyboardEvent) => {
 }
 
 const isAcademicEmail = (emailStr: string) => {
+  if (!emailStr) return true; // Dacă e gol, e valid (deoarece câmpul e opțional)
   const domainParts = emailStr.split('@')
   if (domainParts.length !== 2) return false
   
@@ -62,13 +66,14 @@ const strengthColor = computed(() => {
   return 'bg-emerald-500'
 })
 
-// 2. INLINE VALIDATION REZOLVAT (Folosind Computed în loc de Watch)
-// Acum erorile se calculează constant și instantaneu, chiar și când câmpurile sunt goale
+// 2. INLINE VALIDATION
 const errors = computed(() => {
   const errs = {
     firstName: '',
     lastName: '',
-    email: '',
+    personalEmail: '',
+    studentEmail: '',
+    phone: '',
     password: '',
     confirmPassword: '',
     terms: ''
@@ -78,12 +83,18 @@ const errors = computed(() => {
   
   if (!lastName.value.trim()) errs.lastName = 'Last name is required'
   
-  if (!email.value) {
-    errs.email = 'Email is required'
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
-    errs.email = 'Invalid email format'
-  } else if (!isAcademicEmail(email.value)) {
-    errs.email = 'Must be a valid university email (.edu, stud.*, etc.)'
+  if (!personalEmail.value) {
+    errs.personalEmail = 'Personal email is required'
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(personalEmail.value)) {
+    errs.personalEmail = 'Invalid email format'
+  }
+
+  if (studentEmail.value && !isAcademicEmail(studentEmail.value)) {
+    errs.studentEmail = 'Must be a valid university email'
+  }
+
+  if (phone.value && !/^\+?[0-9\s\-\(\)]{7,15}$/.test(phone.value)) {
+    errs.phone = 'Please enter a valid phone number'
   }
 
   if (!password.value || passwordStrength.value < 4) {
@@ -102,7 +113,6 @@ const errors = computed(() => {
 })
 
 const handleRegister = async () => {
-  // Marcăm toate câmpurile ca fiind atinse pentru a declanșa erorile vizuale
   Object.keys(touched.value).forEach(key => touched.value[key as keyof typeof touched.value] = true)
 
   const hasErrors = Object.values(errors.value).some(error => error !== '')
@@ -110,41 +120,34 @@ const handleRegister = async () => {
   if (hasErrors || isLoading.value) return
   
   isLoading.value = true
-  serverError.value = '' // Resetăm orice eroare anterioară de la server
+  serverError.value = ''
   
   try {
-    // Apelăm endpoint-ul de Quarkus
     const response = await axios.post('http://localhost:8080/api/auth/register', {
       firstName: firstName.value,
       lastName: lastName.value,
-      email: email.value,
-      phone: phone.value || null, // Trimitem null dacă e gol
+      personalEmail: personalEmail.value,
+      studentEmail: studentEmail.value || null,
+      phone: phone.value || null,
       password: password.value
     })
 
     console.log('Cont creat cu succes:', response.data)
-    
-    // După înregistrare cu succes, îl trimitem la login 
-    // (sau direct în dashboard, depinde cum decideți arhitectura)
-    router.push('/login')
+    isRegistered.value = true // Afișăm ecranul de succes (Check your inbox)
 
   } catch (error: any) {
     console.error('Eroare la înregistrare:', error)
     
-    // Gestionarea erorilor venite de la Quarkus
     if (axios.isAxiosError(error) && error.response) {
       if (error.response.status === 409) {
-        // Status 409 Conflict = Email-ul există deja în baza de date
-        serverError.value = 'This academic email is already registered.'
+        serverError.value = 'An account with this email already exists.'
       } else {
-        // Alte erori (ex: 400 Bad Request, 500 Server Error)
         serverError.value = error.response.data?.message || 'Something went wrong. Please try again later.'
       }
     } else {
       serverError.value = 'Network error. Please check your connection.'
     }
   } finally {
-    // Oprim spinner-ul indiferent dacă a fost succes sau eroare
     isLoading.value = false
   }
 }
@@ -158,11 +161,26 @@ const handleRegister = async () => {
         Vibe Check
       </h1>
       <p class="text-slate-400 mt-2 text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase">
-        Create your student account
+        Create your account
       </p>
     </div>
 
-    <form class="space-y-4 md:space-y-5" @submit.prevent="handleRegister" novalidate>
+    <!-- UI pentru Succes (Email Verification) -->
+    <div v-if="isRegistered" class="text-center py-8">
+      <div class="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+        <Mail class="w-8 h-8 text-emerald-400" />
+      </div>
+      <h2 class="text-2xl font-bold text-white mb-2">Check your inbox</h2>
+      <p class="text-slate-400 text-sm mb-6">
+        We've sent a verification link to <span class="text-white font-medium">{{ personalEmail }}</span>.
+      </p>
+      <router-link to="/login" class="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors inline-block font-medium">
+        Return to Login
+      </router-link>
+    </div>
+
+    <!-- Formularul de Înregistrare -->
+    <form v-else class="space-y-4 md:space-y-5" @submit.prevent="handleRegister" novalidate>
       
       <!-- Nume și Prenume -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
@@ -173,6 +191,7 @@ const handleRegister = async () => {
             v-model="firstName"
             @blur="touched.firstName = true"
             type="text" 
+            autocomplete="given-name"
             placeholder="John" 
             :disabled="isLoading"
             class="w-full px-4 py-3 bg-black/20 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all disabled:opacity-50"
@@ -187,6 +206,7 @@ const handleRegister = async () => {
             v-model="lastName"
             @blur="touched.lastName = true"
             type="text" 
+            autocomplete="family-name"
             placeholder="Doe" 
             :disabled="isLoading"
             class="w-full px-4 py-3 bg-black/20 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all disabled:opacity-50"
@@ -196,20 +216,45 @@ const handleRegister = async () => {
         </div>
       </div>
 
-      <!-- Email -->
+      <!-- Personal Email -->
       <div>
-        <label for="email" class="block text-sm font-medium text-slate-300 mb-1">Academic Email</label>
+        <label for="personalEmail" class="block text-sm font-medium text-slate-300 mb-1">Personal Email</label>
         <input 
-          id="email"
-          v-model="email"
-          @blur="touched.email = true"
+          id="personalEmail"
+          v-model="personalEmail"
+          @blur="touched.personalEmail = true"
           type="email" 
-          placeholder="name@stud.university.edu" 
+          autocomplete="email"
+          placeholder="e.g., john.doe@gmail.com" 
           :disabled="isLoading"
           class="w-full px-4 py-3 bg-black/20 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all disabled:opacity-50"
-          :class="(touched.email && errors.email) ? 'border-rose-500 focus:ring-rose-500' : (touched.email && !errors.email) ? 'border-emerald-500/50 focus:ring-emerald-500' : 'border-white/5 focus:ring-indigo-500'"
+          :class="(touched.personalEmail && errors.personalEmail) ? 'border-rose-500 focus:ring-rose-500' : (touched.personalEmail && !errors.personalEmail) ? 'border-emerald-500/50 focus:ring-emerald-500' : 'border-white/5 focus:ring-indigo-500'"
         />
-        <p v-if="touched.email && errors.email" class="text-rose-400 text-xs mt-1.5">{{ errors.email }}</p>
+        <p v-if="touched.personalEmail && errors.personalEmail" class="text-rose-400 text-xs mt-1.5">{{ errors.personalEmail }}</p>
+      </div>
+
+      <!-- Student Email -->
+      <div>
+        <label for="studentEmail" class="flex items-center text-sm font-medium text-slate-300 mb-1">
+          Student Email <span class="text-slate-500 font-normal ml-1">(Optional)</span>
+        </label>
+        <input 
+          id="studentEmail"
+          v-model="studentEmail"
+          @blur="touched.studentEmail = true"
+          type="email" 
+          placeholder="e.g., name@stud.university.edu" 
+          :disabled="isLoading"
+          class="w-full px-4 py-3 bg-black/20 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all disabled:opacity-50"
+          :class="(touched.studentEmail && errors.studentEmail) ? 'border-rose-500 focus:ring-rose-500' : (touched.studentEmail && !errors.studentEmail && studentEmail) ? 'border-emerald-500/50 focus:ring-emerald-500' : 'border-white/5 focus:ring-indigo-500'"
+        />
+        <div class="flex items-start mt-2">
+          <Info class="w-4 h-4 text-indigo-400 mr-1.5 shrink-0 mt-0.5" />
+          <p class="text-xs text-slate-400">
+            Providing a university email unlocks special student benefits within the app.
+          </p>
+        </div>
+        <p v-if="touched.studentEmail && errors.studentEmail" class="text-rose-400 text-xs mt-1.5">{{ errors.studentEmail }}</p>
       </div>
 
       <!-- Phone -->
@@ -218,11 +263,15 @@ const handleRegister = async () => {
         <input 
           id="phone"
           v-model="phone"
+          @blur="touched.phone = true"
           type="tel" 
+          autocomplete="tel"
           placeholder="+40 700 000 000" 
           :disabled="isLoading"
-          class="w-full px-4 py-3 bg-black/20 border border-white/5 focus:ring-indigo-500 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all disabled:opacity-50"
+          class="w-full px-4 py-3 bg-black/20 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all disabled:opacity-50"
+          :class="(touched.phone && errors.phone) ? 'border-rose-500 focus:ring-rose-500' : 'border-white/5 focus:ring-indigo-500'"
         />
+        <p v-if="touched.phone && errors.phone" class="text-rose-400 text-xs mt-1.5">{{ errors.phone }}</p>
       </div>
 
       <!-- Parolă -->
@@ -234,6 +283,7 @@ const handleRegister = async () => {
             v-model="password"
             @focus="touched.password = true"
             :type="showPassword ? 'text' : 'password'" 
+            autocomplete="new-password"
             placeholder="••••••••" 
             :disabled="isLoading"
             @keyup="checkCapsLock"
@@ -246,7 +296,6 @@ const handleRegister = async () => {
           </button>
         </div>
 
-        <!-- Smart Password Indicator UI -->
         <div v-if="touched.password || password" class="mt-3">
           <div class="flex gap-1 mb-2">
             <div v-for="i in 4" :key="i" class="h-1 w-full rounded-full transition-colors duration-500"
@@ -272,6 +321,7 @@ const handleRegister = async () => {
             v-model="confirmPassword"
             @blur="touched.confirmPassword = true"
             :type="showConfirmPassword ? 'text' : 'password'" 
+            autocomplete="new-password"
             placeholder="••••••••" 
             :disabled="isLoading"
             @keyup="checkCapsLock"
@@ -292,7 +342,7 @@ const handleRegister = async () => {
         </p>
       </transition>
 
-      <!-- Terms & Conditions -->
+      <!-- Terms & Conditions cu link-uri funcționale -->
       <div class="flex flex-col mt-2">
         <label class="flex items-center text-xs md:text-sm text-slate-400 hover:text-slate-300 cursor-pointer transition-colors group relative">
           <input type="checkbox" v-model="acceptTerms" @change="touched.terms = true" :disabled="isLoading" class="sr-only peer" />
@@ -304,7 +354,14 @@ const handleRegister = async () => {
             <Check class="w-3.5 h-3.5 text-white stroke-[3] transition-transform duration-200 ease-out"
                    :class="acceptTerms ? 'scale-100 opacity-100' : 'scale-50 opacity-0'" />
           </div>
-          I agree to the Terms of Service and Privacy Policy
+          I agree to the 
+          <a href="/terms" target="_blank" class="text-indigo-400 hover:text-indigo-300 underline underline-offset-2 ml-1" @click.stop>
+            Terms of Service
+          </a> 
+          <span class="mx-1">and</span> 
+          <a href="/privacy" target="_blank" class="text-indigo-400 hover:text-indigo-300 underline underline-offset-2" @click.stop>
+            Privacy Policy
+          </a>
         </label>
         <p v-if="touched.terms && errors.terms" class="text-rose-400 text-xs mt-1.5 ml-7">{{ errors.terms }}</p>
       </div>
@@ -326,7 +383,7 @@ const handleRegister = async () => {
       </button>
     </form>
 
-    <p class="text-center text-xs md:text-sm text-slate-400 mt-6">
+    <p v-if="!isRegistered" class="text-center text-xs md:text-sm text-slate-400 mt-6">
       Already have an account? 
       <router-link to="/login" class="text-emerald-400 hover:text-emerald-300 font-medium transition-colors">Sign in here</router-link>
     </p>
