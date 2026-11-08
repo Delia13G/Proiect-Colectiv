@@ -30,6 +30,7 @@ const validateForm = () => {
     emailError.value = 'Email is required'
     isValid = false
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+    // UPDATED: Generic error message instead of university domain restriction
     emailError.value = 'Please enter a valid email address'
     isValid = false
   }
@@ -91,6 +92,7 @@ const togglePassword = () => {
       <h1 class="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-rose-400 to-emerald-400 bg-[length:200%_auto] animate-gradient tracking-widest drop-shadow-[0_0_20px_rgba(255,255,255,0.1)] pb-1 ml-3">
         Cliq
       </h1>
+      <!-- UPDATED: Removed "university" from the subtitle -->
       <p class="text-slate-400 mt-2 text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase">
         Enter your network
       </p>
@@ -108,6 +110,7 @@ const togglePassword = () => {
       
       <!-- Email Field -->
       <div>
+        <!-- UPDATED: Changed label to Email Address -->
         <label for="email" class="block text-sm font-medium text-slate-300 mb-1">Email Address</label>
         <input 
           id="email"
