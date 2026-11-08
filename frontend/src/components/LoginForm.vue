@@ -14,7 +14,6 @@ const isLoading = ref(false)
 
 const emailError = ref('')
 const passwordError = ref('')
-// NEW: Stare pentru erorile de la backend
 const serverError = ref('')
 
 const checkCapsLock = (event: KeyboardEvent) => {
@@ -25,7 +24,7 @@ const validateForm = () => {
   let isValid = true
   emailError.value = ''
   passwordError.value = ''
-  serverError.value = '' // Resetăm eroarea de server la o nouă încercare
+  serverError.value = ''
 
   if (!email.value) {
     emailError.value = 'Email is required'
@@ -50,7 +49,6 @@ const handleLogin = async () => {
   serverError.value = ''
   
   try {
-    // Înlocuiește URL-ul cu endpoint-ul exact din AuthResource.java al colegilor de pe backend
     const response = await axios.post('http://localhost:8080/auth/login', {
       email: email.value,
       password: password.value,
@@ -59,13 +57,10 @@ const handleLogin = async () => {
 
     console.log('Login successful:', response.data)
     
-    // Logica de Salvare JWT și Routing va fi implementată în următorul tichet (State Management)
-    
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const status = error.response?.status
       
-      // Mapăm codurile HTTP la mesaje UI specifice
       if (status === 401) {
         serverError.value = 'Invalid email or password.'
       } else if (status === 404) {
@@ -101,7 +96,7 @@ const togglePassword = () => {
       </p>
     </div>
 
-    <!-- NEW: Alertă globală pentru erori de la backend -->
+    <!-- Alertă globală pentru erori de la backend -->
     <transition enter-active-class="transition ease-out duration-300" enter-from-class="opacity-0 -translate-y-2" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition ease-in duration-200" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-2">
       <div v-if="serverError" class="mb-6 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-start">
         <AlertCircle class="w-5 h-5 text-rose-400 mr-2.5 flex-shrink-0 mt-0.5" />
