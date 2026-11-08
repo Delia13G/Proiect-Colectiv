@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
@@ -18,6 +18,15 @@ const authStore = useAuthStore()
 const emailError = ref('')
 const passwordError = ref('')
 const serverError = ref('')
+
+// NEW: Încărcăm email-ul salvat când se montează componenta
+onMounted(() => {
+  const savedEmail = localStorage.getItem('rememberedEmail')
+  if (savedEmail) {
+    email.value = savedEmail
+    rememberMe.value = true
+  }
+})
 
 const checkCapsLock = (event: KeyboardEvent) => {
   capsLockOn.value = event.getModifierState('CapsLock')
@@ -62,6 +71,13 @@ const handleLogin = async () => {
     
     if (response.data && response.data.token) {
       authStore.setToken(response.data.token)
+    }
+
+    // NEW: Salvăm sau ștergem email-ul din localStorage pe baza checkbox-ului
+    if (rememberMe.value) {
+      localStorage.setItem('rememberedEmail', email.value)
+    } else {
+      localStorage.removeItem('rememberedEmail')
     }
 
     router.push('/dashboard')
@@ -191,9 +207,9 @@ const togglePassword = () => {
           Remember me
         </label>
         
-        <a href="#" class="text-xs md:text-sm text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+        <router-link to="/forgot-password" class="text-xs md:text-sm text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
           Forgot password?
-        </a>
+        </router-link>
       </div>
 
       <!-- CTA Button -->

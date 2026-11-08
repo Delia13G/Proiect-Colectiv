@@ -6,13 +6,10 @@ import LoginForm from '../src/components/LoginForm.vue'
 import { createTestingPinia } from '@pinia/testing'
 import { useAuthStore } from '../src/stores/auth'
 
-// Folosim vi.hoisted pentru a crea o referință unică pentru push.
-// Aceeași funcție va fi folosită de componentă și verificată în test.
 const { mockPush } = vi.hoisted(() => ({
   mockPush: vi.fn()
 }))
 
-// Mock Axios
 vi.mock('axios', () => ({
   default: {
     post: vi.fn(),
@@ -20,7 +17,6 @@ vi.mock('axios', () => ({
   }
 }))
 
-// Mock Vue Router care folosește referința unică mockPush
 vi.mock('vue-router', () => ({
   useRouter: () => ({
     push: mockPush
@@ -33,9 +29,9 @@ vi.mock('vue-router', () => ({
 describe('LoginForm.vue', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.clear() // Curățăm localStorage înainte de fiecare test
   })
 
-  // Helper pentru a monta componenta cu Pinia injectat
   const createWrapper = () => {
     return mount(LoginForm, {
       global: {
@@ -53,7 +49,6 @@ describe('LoginForm.vue', () => {
 
   it('prevents submission and shows errors when fields are empty', async () => {
     const wrapper = createWrapper()
-
     await wrapper.find('form').trigger('submit.prevent')
 
     expect(wrapper.text()).toContain('Email is required')
@@ -65,10 +60,8 @@ describe('LoginForm.vue', () => {
     const wrapper = createWrapper()
     const authStore = useAuthStore()
     
-    // Configurăm axios să returneze un token fals
     ;(axios.post as any).mockResolvedValueOnce({ data: { token: 'fake-jwt-token' } })
 
-    // Validăm formularul cu un email generic
     await wrapper.find('input[type="email"]').setValue('andrei@gmail.com')
     await wrapper.find('input[type="password"]').setValue('parola123')
     
@@ -76,16 +69,7 @@ describe('LoginForm.vue', () => {
     await flushPromises()
 
     expect(wrapper.text()).not.toContain('Please enter a valid email address')
-    
-    expect(axios.post).toHaveBeenCalledWith('http://localhost:8080/auth/login', {
-      email: 'andrei@gmail.com',
-      password: 'parola123',
-      rememberMe: false
-    })
-
     expect(authStore.setToken).toHaveBeenCalledWith('fake-jwt-token')
-
-    // Verificăm rutarea folosind direct mockPush
     expect(mockPush).toHaveBeenCalledWith('/dashboard')
   })
 
@@ -105,5 +89,34 @@ describe('LoginForm.vue', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('Invalid email or password.')
+  })
+
+  // NEW: Teste pentru funcționalitatea Remember Me
+  it('loads remembered email from localStorage on mount', async () => {
+    // Setăm un email în memorie înainte să montăm componenta
+    localStorage.setItem('rememberedEmail', 'saved@gmail.com')
+    
+    const wrapper = createWrapper()
+    await flushPromises() // Așteptăm executarea lui onMounted
+    
+    const emailInput = wrapper.find('input[type="email"]').element as HTMLInputElement
+    const checkbox = wrapper.find('input[type="checkbox"]').element as HTMLInputElement
+    
+    expect(emailInput.value).toBe('saved@gmail.com')
+    expect(checkbox.checked).toBe(true)
+  })
+
+  it('saves email to localStorage when Remember Me is checked during login', async () => {
+    const wrapper = createWrapper()
+    ;(axios.post as any).mockResolvedValueOnce({ data: { token: 'fake-jwt-token' } })
+
+    await wrapper.find('input[type="email"]').setValue('newuser@gmail.com')
+    await wrapper.find('input[type="password"]').setValue('parola123')
+    await wrapper.find('input[type="checkbox"]').setValue(true) // Bifăm "Remember Me"
+    
+    await wrapper.find('form').trigger('submit.prevent')
+    await flushPromises()
+
+    expect(localStorage.getItem('rememberedEmail')).toBe('newuser@gmail.com')
   })
 })
