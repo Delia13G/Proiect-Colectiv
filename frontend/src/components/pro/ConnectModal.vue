@@ -53,7 +53,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import type { Talent } from '@/services/proService';
+import type { Talent } from '../../services/proService';
 
 const props = defineProps<{
   isOpen: boolean;
