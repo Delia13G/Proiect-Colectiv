@@ -1,3 +1,4 @@
+
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
@@ -10,7 +11,7 @@ const router = createRouter({
     {
       path: '/',
       redirect: '/login'
-    }, 
+    },
     {
       path: '/login',
       name: 'login',
@@ -30,6 +31,11 @@ const router = createRouter({
       path: '/dating/onboarding',
       name: 'DatingOnboarding',
       component: DatingOnboarding
+    },
+    {
+      path: '/pro',
+      name: 'pro',
+      component: () => import('../views/ProView.vue')
     }
   ]
 })
