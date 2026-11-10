@@ -9,9 +9,39 @@ import ActionButtons from '../components/dating/ActionButtons.vue'
 import FilterDrawer from '../components/dating/FilterDrawer.vue'
 import MatchModal from '../components/dating/MatchModal.vue'
 import LikesYou from '../components/dating/LikesYou.vue'
+import ChatView from '../components/dating/ChatView.vue'
+
+// TYPES
+interface DatingProfile {
+  id: number
+  name: string
+  age: number
+  university: string
+  occupation: string
+  distance: number
+  bio: string
+  interests: string[]
+  photos: string[]
+  verifiedStudent: boolean
+  recentlyActive: boolean
+}
+
+interface Match {
+  id: number
+  name: string
+  image: string
+}
+
+interface Chat {
+  id: number
+  name: string
+  message: string
+  image: string
+  unread: boolean
+}
 
 // NAVIGATION
-const activePage = ref<'discovery' | 'likes'>('discovery')
+const activePage = ref<'discovery' | 'likes' | 'chat'>('discovery')
 
 // MODALS
 const showFilters = ref(false)
@@ -23,11 +53,8 @@ const currentUser = {
   image: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300'
 }
 
-// PROFILE THAT MATCHED WITH THE CURRENT USER
-const matchedProfile = ref<(typeof allProfiles)[number] | null>(null)
-
 // DEMO PROFILES
-const allProfiles = [
+const allProfiles: DatingProfile[] = [
   {
     id: 1,
     name: 'Irina',
@@ -76,9 +103,11 @@ const allProfiles = [
   }
 ]
 
-const profiles = ref([...allProfiles])
+// MATCHED PROFILE
+const matchedProfile = ref<DatingProfile | null>(null)
 
-// CURRENT PROFILE
+// PROFILES
+const profiles = ref<DatingProfile[]>([...allProfiles])
 const currentIndex = ref(0)
 
 const currentProfile = computed(() => {
@@ -86,7 +115,7 @@ const currentProfile = computed(() => {
 })
 
 // MATCHES
-const matches = ref([
+const matches = ref<Match[]>([
   {
     id: 10,
     name: 'Ioana',
@@ -100,7 +129,7 @@ const matches = ref([
 ])
 
 // CHATS
-const chats = ref([
+const chats = ref<Chat[]>([
   {
     id: 10,
     name: 'Ioana',
@@ -116,6 +145,9 @@ const chats = ref([
     unread: false
   }
 ])
+
+// ACTIVE CHAT
+const activeChat = ref<Chat | null>(null)
 
 // LIKES YOU
 const likedProfiles = ref([
@@ -157,19 +189,17 @@ interface HistoryItem {
 
 const history = ref<HistoryItem[]>([])
 
-// PROFILES ON WHICH THE USER PERFORMED AN ACTION
 const likedProfileIds = ref<number[]>([])
 const passedProfileIds = ref<number[]>([])
 const superLikedProfileIds = ref<number[]>([])
 
-// UNDO
 const canUndo = computed(() => history.value.length > 0)
 
 const actionsDisabled = computed(() => {
   return !currentProfile.value || filters.value.isPaused
 })
 
-// ACTIONS
+// DISCOVERY ACTIONS
 function nextProfile() {
   if (currentIndex.value < profiles.value.length - 1) {
     currentIndex.value++
@@ -178,20 +208,17 @@ function nextProfile() {
   }
 }
 
-// REGISTER AN ACTION
 function registerAction(action: ActionType) {
   if (!currentProfile.value || filters.value.isPaused) return
 
   const profile = currentProfile.value
 
-  // SAVE ACTION HISTORY
   history.value.push({
     profileId: profile.id,
     previousIndex: currentIndex.value,
     action
   })
 
-  // SAVE ACTION
   if (action === 'pass') {
     passedProfileIds.value.push(profile.id)
   }
@@ -204,8 +231,7 @@ function registerAction(action: ActionType) {
     superLikedProfileIds.value.push(profile.id)
   }
 
-  // DEMO MATCH:
-  // A Like on Irina (profile ID 1) creates a simulated match.
+  // DEMO MATCH: LIKE ON IRINA
   if (action === 'like' && profile.id === 1) {
     matchedProfile.value = profile
     showMatchModal.value = true
@@ -214,17 +240,14 @@ function registerAction(action: ActionType) {
   nextProfile()
 }
 
-// PASS
 function passProfile() {
   registerAction('pass')
 }
 
-// LIKE
 function likeProfile() {
   registerAction('like')
 }
 
-// SUPER LIKE
 function superLikeProfile() {
   registerAction('super-like')
 }
@@ -300,19 +323,84 @@ function applyFilters(newFilters: typeof filters.value) {
   })
 }
 
-// SIDEBAR ACTIONS
+// OPEN CHAT FROM SIDEBAR
 function openChat(chatId: number) {
-  console.log('Open chat:', chatId)
+  const existingChat = chats.value.find(chat => chat.id === chatId)
+
+  if (existingChat) {
+    activeChat.value = existingChat
+    existingChat.unread = false
+    activePage.value = 'chat'
+    return
+  }
+
+  const matchedUser = matches.value.find(match => match.id === chatId)
+
+  if (matchedUser) {
+    const newChat: Chat = {
+      id: matchedUser.id,
+      name: matchedUser.name,
+      image: matchedUser.image,
+      message: 'Start a conversation...',
+      unread: false
+    }
+
+    chats.value.push(newChat)
+    activeChat.value = newChat
+    activePage.value = 'chat'
+  }
 }
 
+// RETURN FROM CHAT
+function closeChat() {
+  activeChat.value = null
+  activePage.value = 'discovery'
+}
+
+// LIKE BACK
 function likeBack(profileId: number) {
-  console.log('Like back:', profileId)
+  const profile = likedProfiles.value.find(
+    item => item.id === profileId
+  )
+
+  if (!profile) return
+
+  likedProfiles.value = likedProfiles.value.filter(
+    item => item.id !== profileId
+  )
+
+  const newMatch: Match = {
+    id: profile.id,
+    name: profile.name,
+    image: profile.image
+  }
+
+  matches.value.push(newMatch)
 }
 
 // MATCH MODAL ACTIONS
 function sendMessage() {
-  console.log('Open conversation with:', matchedProfile.value?.name)
+  if (!matchedProfile.value) return
+
+  const profile = matchedProfile.value
+
+  let chat = chats.value.find(item => item.id === profile.id)
+
+  if (!chat) {
+    chat = {
+      id: profile.id,
+      name: profile.name,
+      image: profile.photos[0],
+      message: 'Start a conversation...',
+      unread: false
+    }
+
+    chats.value.push(chat)
+  }
+
+  activeChat.value = chat
   showMatchModal.value = false
+  activePage.value = 'chat'
 }
 
 function continueDiscovery() {
@@ -323,7 +411,6 @@ function continueDiscovery() {
 <template>
   <div class="dating-page">
 
-    <!-- NAVBAR -->
     <DatingNavbar
       @open-filters="showFilters = true"
       @open-likes="activePage = 'likes'"
@@ -345,7 +432,6 @@ function continueDiscovery() {
         v-if="activePage === 'discovery'"
         class="discovery-area"
       >
-
         <div class="discovery-heading">
           <div>
             <h1>Discover people</h1>
@@ -358,28 +444,25 @@ function continueDiscovery() {
           </span>
         </div>
 
-        <!-- PROFILE -->
         <ProfileCard
           v-if="currentProfile && !filters.isPaused"
           :profile="currentProfile"
         />
 
-        <!-- EMPTY STATE -->
-        <div
-          v-else
-          class="empty-state"
-        >
+        <div v-else class="empty-state">
           <h2>
-            {{ filters.isPaused
-              ? 'Your Dating profile is paused'
-              : 'You have seen everyone nearby!'
+            {{
+              filters.isPaused
+                ? 'Your Dating profile is paused'
+                : 'You have seen everyone nearby!'
             }}
           </h2>
 
           <p>
-            {{ filters.isPaused
-              ? 'You can reactivate your profile in your filters.'
-              : 'Try changing your preferences to discover more people.'
+            {{
+              filters.isPaused
+                ? 'You can reactivate your profile in your filters.'
+                : 'Try changing your preferences to discover more people.'
             }}
           </p>
 
@@ -388,7 +471,6 @@ function continueDiscovery() {
           </button>
         </div>
 
-        <!-- ACTION BUTTONS -->
         <ActionButtons
           v-if="currentProfile"
           :can-undo="canUndo"
@@ -398,18 +480,29 @@ function continueDiscovery() {
           @super-like="superLikeProfile"
           @undo="undoProfile"
         />
-
       </section>
 
       <!-- LIKES YOU -->
       <section
-        v-else
+        v-else-if="activePage === 'likes'"
         class="likes-content"
       >
         <LikesYou
           :profiles="likedProfiles"
           :blurred="true"
           @like-back="likeBack"
+        />
+      </section>
+
+      <!-- CHAT -->
+      <section
+        v-else-if="activePage === 'chat' && activeChat"
+        class="chat-content"
+      >
+        <ChatView
+          :contact-name="activeChat.name"
+          :contact-image="activeChat.image"
+          @back="closeChat"
         />
       </section>
 
@@ -519,13 +612,23 @@ function continueDiscovery() {
   cursor: pointer;
 }
 
-.likes-content {
+.likes-content,
+.chat-content {
   min-width: 0;
+  width: 100%;
+}
+
+.chat-content {
+  height: 650px;
 }
 
 @media (max-width: 850px) {
   .dating-layout {
     grid-template-columns: 1fr;
+  }
+
+  .chat-content {
+    height: 600px;
   }
 }
 </style>
