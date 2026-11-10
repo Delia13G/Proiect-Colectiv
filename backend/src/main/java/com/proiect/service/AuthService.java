@@ -54,4 +54,15 @@ public class AuthService {
         newUser.persist();
         return newUser;
     }
+
+
+public User authenticateUser(String email, String password) {
+    User user = User.find("email", email).firstResult();
+
+    if (user == null || !BcryptUtil.matches(password, user.passwordHash)) {
+        throw new jakarta.ws.rs.NotAuthorizedException("Email sau parolă incorectă.");
+    }
+
+    return user;
+}
 }

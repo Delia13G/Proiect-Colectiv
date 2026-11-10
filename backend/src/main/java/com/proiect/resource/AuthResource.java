@@ -1,5 +1,7 @@
+
 package com.proiect.resource;
 
+import com.proiect.entity.User;
 import com.proiect.service.AuthService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -20,11 +22,31 @@ public class AuthResource {
     @POST
     @Path("/register")
     public Response register(RegisterRequest request) {
-        // Apelăm logica de business actualizată, pasând și noul studentEmail
-        // Dacă datele sunt invalide, serviciul va arunca automat un BadRequestException (HTTP 400)
-        authService.registerUser(request.username(), request.email(), request.studentEmail(), request.password());
-        
-        // Dacă totul a decurs cu succes, returnăm statusul HTTP 201 (Created)
+        authService.registerUser(
+            request.username(),
+            request.email(),
+            request.studentEmail(),
+            request.password()
+        );
+
         return Response.status(Response.Status.CREATED).build();
+    }
+
+    @POST
+    @Path("/login")
+    public Response login(LoginRequest request) {
+        User user = authService.authenticateUser(
+            request.email(),
+            request.password()
+        );
+
+        LoginResponse response = new LoginResponse(
+            user.id,
+            user.username,
+            user.email,
+            user.studentEmail
+        );
+
+        return Response.ok(response).build();
     }
 }
