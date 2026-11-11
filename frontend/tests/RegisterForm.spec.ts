@@ -27,13 +27,13 @@ describe('RegisterForm.vue', () => {
     
     // Verificăm erorile apărute din funcția `computed`
     expect(wrapper.text()).toContain('First name is required')
-    expect(wrapper.text()).toContain('Email is required')
+    expect(wrapper.text()).toContain('Personal email is required')
     expect(wrapper.text()).toContain('You must accept the terms')
   })
 
   it('rejects non-academic emails', async () => {
     const wrapper = mount(RegisterForm)
-    const emailInput = wrapper.find('input[type="email"]')
+    const emailInput = wrapper.find('input[id="studentEmail"]')
     
     // Introducem un email non-academic
     await emailInput.setValue('student_oarecare@gmail.com')

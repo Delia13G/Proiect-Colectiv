@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import axios from 'axios'
-//import { useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { Eye, EyeOff, Loader2, AlertTriangle, Check, AlertCircle } from 'lucide-vue-next'
 
 const email = ref('')
@@ -10,7 +10,7 @@ const showPassword = ref(false)
 const rememberMe = ref(false)
 const capsLockOn = ref(false)
 const isLoading = ref(false)
-//const router = useRouter()
+const router = useRouter()
 
 const emailError = ref('')
 const passwordError = ref('')
@@ -50,13 +50,18 @@ const handleLogin = async () => {
   serverError.value = ''
   
   try {
-    const response = await axios.post('http://localhost:8080/auth/login', {
+    const response = await axios.post('/api/auth/login', {
       email: email.value,
       password: password.value,
       rememberMe: rememberMe.value
     })
 
-    console.log('Login successful:', response.data)
+    if (response.data?.token) {
+      localStorage.setItem('token', response.data.token)
+      localStorage.setItem('isStudent', String(Boolean(response.data.isStudent)))
+    }
+
+    router.push('/social')
     
   } catch (error) {
     if (axios.isAxiosError(error)) {

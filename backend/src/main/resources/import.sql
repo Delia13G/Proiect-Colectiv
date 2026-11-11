@@ -12,3 +12,7 @@ INSERT INTO lenses (id, profile_id, name, active) VALUES
 (1, 1, 'Data Lens', true),
 (2, 2, 'Social Lens', true),
 (3, 3, 'Career Lens', true);
+
+SELECT setval('users_SEQ', 50, true);
+SELECT setval('profiles_SEQ', 50, true);
+SELECT setval('lenses_SEQ', 50, true);

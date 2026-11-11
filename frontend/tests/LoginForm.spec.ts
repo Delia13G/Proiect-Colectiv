@@ -48,7 +48,7 @@ describe('LoginForm.vue', () => {
     await flushPromises()
 
     expect(wrapper.text()).not.toContain('Please enter a valid email address')
-    expect(axios.post).toHaveBeenCalledWith('http://localhost:8080/auth/login', {
+    expect(axios.post).toHaveBeenCalledWith('/api/auth/login', {
       email: 'andrei@gmail.com',
       password: 'parola123',
       rememberMe: false
