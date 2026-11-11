@@ -65,9 +65,17 @@ public class AuthService {
         newUser.persist(); // Salvarea utilizatorului în baza de date
         
         // 4. Generare automată a celor 3 lentile (Profile) pentru noul utilizator (PRO-32)
-        Profile dateProfile = new Profile(ProfileType.DATE, newUser);
-        Profile socialProfile = new Profile(ProfileType.SOCIAL, newUser);
-        Profile proProfile = new Profile(ProfileType.PRO, newUser);
+        Profile dateProfile = new Profile();
+dateProfile.type = ProfileType.DATE;
+dateProfile.user = newUser;
+
+Profile socialProfile = new Profile();
+socialProfile.type = ProfileType.SOCIAL;
+socialProfile.user = newUser;
+
+Profile proProfile = new Profile();
+proProfile.type = ProfileType.PRO;
+proProfile.user = newUser;
         
         // 5. Salvarea lentilelor în baza de date
         em.persist(dateProfile);
