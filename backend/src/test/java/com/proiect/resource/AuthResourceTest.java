@@ -3,11 +3,24 @@ package com.proiect.resource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import jakarta.transaction.Transactional;
+import com.proiect.entity.User;
+import com.proiect.entity.Profile;
+import com.proiect.entity.Lens;
 
 import static io.restassured.RestAssured.given;
 
 @QuarkusTest
 public class AuthResourceTest {
+
+    @BeforeEach
+    @Transactional
+    public void setup() {
+        Lens.deleteAll();
+        Profile.deleteAll();
+        User.deleteAll();
+    }
 
     @Test
     public void testRegisterSuccessWithStandardEmail() {
