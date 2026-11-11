@@ -20,4 +20,8 @@ public class Profile extends PanacheEntity {
 
     @Column(length = 500)
     public String bio;
-} 
+
+    // Câmp nou adăugat pentru PRO-35
+    @Column(name = "session_state")
+    public String sessionState;
+}

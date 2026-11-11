@@ -6,7 +6,8 @@ import axios from 'axios'
 
 const firstName = ref('')
 const lastName = ref('')
-const email = ref('')
+const personalEmail = ref('')
+const studentEmail = ref('')
 const phone = ref('')
 const password = ref('')
 const confirmPassword = ref('')
@@ -23,7 +24,9 @@ const router = useRouter()
 const touched = ref({
   firstName: false,
   lastName: false,
-  email: false,
+  personalEmail: false,
+  studentEmail: false,
+  phone: false,
   password: false,
   confirmPassword: false,
   terms: false
@@ -32,6 +35,11 @@ const touched = ref({
 const checkCapsLock = (event: KeyboardEvent) => {
   capsLockOn.value = event.getModifierState('CapsLock')
 }
+
+const isValidEmail = (emailStr: string) => {
+  const emailRegex = /^[^\s@]+@(gmail\.com|yahoo\.com)$/;
+  return emailRegex.test(emailStr);
+};
 
 const isAcademicEmail = (emailStr: string) => {
   const domainParts = emailStr.split('@')
@@ -68,7 +76,8 @@ const errors = computed(() => {
   const errs = {
     firstName: '',
     lastName: '',
-    email: '',
+    personalEmail: '',
+    studentEmail: '',
     password: '',
     confirmPassword: '',
     terms: ''
@@ -78,13 +87,15 @@ const errors = computed(() => {
   
   if (!lastName.value.trim()) errs.lastName = 'Last name is required'
   
-  if (!email.value) {
-    errs.email = 'Email is required'
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
-    errs.email = 'Invalid email format'
-  } else if (!isAcademicEmail(email.value)) {
-    errs.email = 'Must be a valid university email (.edu, stud.*, etc.)'
-  }
+  if (!personalEmail.value) {
+  errs.personalEmail = 'Personal email is required'
+} else if (!isValidEmail(personalEmail.value)) {
+  errs.personalEmail = 'Must be a valid Gmail or Yahoo address'
+}
+
+  if (studentEmail.value && !isAcademicEmail(studentEmail.value)) {
+  errs.studentEmail = 'Must be a valid university email (.edu, stud.*, etc.)'
+}
 
   if (!password.value || passwordStrength.value < 4) {
     errs.password = 'Password does not meet all requirements'
@@ -115,10 +126,13 @@ const handleRegister = async () => {
   serverError.value = ''
 
   try {
-    await axios.post('http://localhost:8080/api/auth/register', {
-      username: `${firstName.value.trim()} ${lastName.value.trim()}`,
-      email: email.value.trim(),
-      studentEmail: email.value.trim(),
+    // Apelăm endpoint-ul de Quarkus
+    const response = await axios.post('http://localhost:8080/api/auth/register', {
+      firstName: firstName.value,
+      lastName: lastName.value,
+      email: personalEmail.value,
+      studentEmail: studentEmail.value || null, // Trimitem null dacă e gol
+      phone: phone.value || null, // Trimitem null dacă e gol
       password: password.value
     })
 
@@ -188,19 +202,34 @@ const handleRegister = async () => {
       </div>
 
       <!-- Email -->
-      <div>
-        <label for="email" class="block text-sm font-medium text-slate-300 mb-1">Academic Email</label>
+    <div>
+        <label for="personalEmail" class="block text-sm font-medium text-slate-300 mb-1">Personal Email</label>
         <input 
-          id="email"
-          v-model="email"
-          @blur="touched.email = true"
+          id="personalEmail"
+          v-model="personalEmail"
+          @blur="touched.personalEmail = true"
           type="email" 
-          placeholder="name@stud.university.edu" 
+          placeholder="nume@gmail.com sau yahoo.com" 
           :disabled="isLoading"
           class="w-full px-4 py-3 bg-black/20 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all disabled:opacity-50"
-          :class="(touched.email && errors.email) ? 'border-rose-500 focus:ring-rose-500' : (touched.email && !errors.email) ? 'border-emerald-500/50 focus:ring-emerald-500' : 'border-white/5 focus:ring-indigo-500'"
+          :class="(touched.personalEmail && errors.personalEmail) ? 'border-rose-500 focus:ring-rose-500' : (touched.personalEmail && !errors.personalEmail) ? 'border-emerald-500/50 focus:ring-emerald-500' : 'border-white/5 focus:ring-indigo-500'"
         />
-        <p v-if="touched.email && errors.email" class="text-rose-400 text-xs mt-1.5">{{ errors.email }}</p>
+        <p v-if="touched.personalEmail && errors.personalEmail" class="text-rose-400 text-xs mt-1.5">{{ errors.personalEmail }}</p>
+      </div>
+
+      <div>
+        <label for="studentEmail" class="block text-sm font-medium text-slate-300 mb-1">Academic Email (Optional)</label>
+        <input 
+          id="studentEmail"
+          v-model="studentEmail"
+          @blur="touched.studentEmail = true"
+          type="email" 
+          placeholder="name@stud.ubbcluj.ro" 
+          :disabled="isLoading"
+          class="w-full px-4 py-3 bg-black/20 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all disabled:opacity-50"
+          :class="(touched.studentEmail && errors.studentEmail) ? 'border-rose-500 focus:ring-rose-500' : (touched.studentEmail && !errors.studentEmail) ? 'border-emerald-500/50 focus:ring-emerald-500' : 'border-white/5 focus:ring-indigo-500'"
+        />
+        <p v-if="touched.studentEmail && errors.studentEmail" class="text-rose-400 text-xs mt-1.5">{{ errors.studentEmail }}</p>
       </div>
 
       <!-- Phone -->
