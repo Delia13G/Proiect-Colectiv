@@ -1,60 +1,31 @@
 package com.proiect.entity;
 
+import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
-public class Profile {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Enumerated(EnumType.STRING)
-    private ProfileType type;
+@Table(name = "profiles")
+public class Profile extends PanacheEntity {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    @JsonIgnore 
-    private User user;
+    @JsonIgnore // Păstrat din PRO-32 pentru a preveni bucle infinite la afișarea JSON-ului
+    public User user;
 
-    public Profile() {
-    }
+    @Enumerated(EnumType.STRING)
+    @Column(name = "profile_type", nullable = false)
+    public ProfileType type; // Din PRO-32 (folosind Enum în loc de String)
 
-    public Profile(ProfileType type, User user) {
-        this.type = type;
-        this.user = user;
-    }
+    @Column(length = 500)
+    public String bio; // Din main (PRO-35)
 
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public ProfileType getType() {
-        return type;
-    }
-
-    public void setType(ProfileType type) {
-        this.type = type;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
+    @Column(name = "session_state")
+    public String sessionState; // Din main (PRO-35)
 }
