@@ -23,4 +23,8 @@ public class User extends PanacheEntity {
     @NotBlank(message = "Parola este obligatorie")
     @Column(name = "password_hash", nullable = false)
     public String passwordHash;
+
+    @Email(message = "Formatul email-ului este invalid")
+    @Column(unique = true, nullable = true)
+    public String studentEmail; // Adresa de email pentru studenți (opțional)
 }
