@@ -20,35 +20,31 @@
     <div class="flex flex-col gap-3">
       <div class="flex items-center justify-between px-1">
         <h3 class="text-[11px] font-bold tracking-wider uppercase text-slate-400">Proiectele Mele</h3>
-        <button type="button" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition-colors">+ Nou</button>
+        <button
+          type="button"
+          @click="isModalOpen = true"
+          class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition-colors"
+        >
+          + Nou
+        </button>
       </div>
 
       <div class="flex flex-col gap-2">
-        <!-- Card Proiect 1 -->
-        <div class="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/15 transition-all cursor-pointer flex items-center justify-between group">
+        <div
+          v-for="project in myProjects"
+          :key="project.id"
+          class="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/15 transition-all cursor-pointer flex items-center justify-between group"
+        >
           <div class="flex items-center gap-3 min-w-0">
             <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-sm font-semibold shrink-0">
-              👥
+              {{ project.icon }}
             </div>
             <div class="flex flex-col min-w-0">
-              <span class="text-xs font-semibold text-slate-200 group-hover:text-white truncate">Proiect Colectiv - Echipa 5</span>
-              <span class="text-[10px] text-slate-400">Anunț de echipe</span>
+              <span class="text-xs font-semibold text-slate-200 group-hover:text-white truncate">{{ project.title }}</span>
+              <span class="text-[10px] text-slate-400">{{ project.category }}</span>
             </div>
           </div>
-          <span class="w-2 h-2 rounded-full bg-indigo-500 shrink-0"></span>
-        </div>
-
-        <!-- Card Proiect 2 -->
-        <div class="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/15 transition-all cursor-pointer flex items-center justify-between group">
-          <div class="flex items-center gap-3 min-w-0">
-            <div class="w-8 h-8 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center text-sm shrink-0">
-              📁
-            </div>
-            <div class="flex flex-col min-w-0">
-              <span class="text-xs font-semibold text-slate-200 group-hover:text-white truncate">Licență Web App</span>
-              <span class="text-[10px] text-slate-400">Anunț de colaborare</span>
-            </div>
-          </div>
+          <span v-if="project.isNew" class="w-2 h-2 rounded-full bg-indigo-500 shrink-0"></span>
         </div>
       </div>
     </div>
@@ -95,9 +91,46 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal Adăugare Proiect -->
+    <CreateProjectModal
+      :isOpen="isModalOpen"
+      @close="isModalOpen = false"
+      @create="handleAddProject"
+    />
   </aside>
 </template>
 
 <script setup lang="ts">
-// Componentă SidebarLeft pentru Cliq Pro
+import { ref } from 'vue';
+import CreateProjectModal from './CreateProjectModal.vue';
+
+const isModalOpen = ref(false);
+
+const myProjects = ref([
+  {
+    id: 1,
+    title: 'Proiect Colectiv - Echipa 5',
+    category: 'Anunț de echipe',
+    icon: '👥',
+    isNew: true
+  },
+  {
+    id: 2,
+    title: 'Licență Web App',
+    category: 'Anunț de colaborare',
+    icon: '📁',
+    isNew: false
+  }
+]);
+
+function handleAddProject(newProj: { title: string; category: string; description: string }) {
+  myProjects.value.unshift({
+    id: Date.now(),
+    title: newProj.title,
+    category: newProj.category,
+    icon: '🚀',
+    isNew: true
+  });
+}
 </script>
