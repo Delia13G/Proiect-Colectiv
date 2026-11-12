@@ -112,21 +112,22 @@ const errors = computed(() => {
   return errs
 })
 
+
 const handleRegister = async () => {
-  // Marcăm toate câmpurile ca fiind atinse pentru a declanșa erorile vizuale
-  Object.keys(touched.value).forEach(key => touched.value[key as keyof typeof touched.value] = true)
+  Object.keys(touched.value).forEach(key => {
+    touched.value[key as keyof typeof touched.value] = true
+  })
 
   const hasErrors = Object.values(errors.value).some(error => error !== '')
-  
+
   if (hasErrors || isLoading.value) return
-  
+
   isLoading.value = true
-  serverError.value = '' // Resetăm orice eroare anterioară de la server
-  
+  serverError.value = ''
+
   try {
     // Apelăm endpoint-ul de Quarkus
-    const response = await axios.post('http://localhost:8080/api/auth/register', {
-      firstName: firstName.value,
+      await axios.post('http://localhost:8080/api/auth/register', {      firstName: firstName.value,
       lastName: lastName.value,
       email: personalEmail.value,
       studentEmail: studentEmail.value || null, // Trimitem null dacă e gol
@@ -134,32 +135,23 @@ const handleRegister = async () => {
       password: password.value
     })
 
-    console.log('Cont creat cu succes:', response.data)
-    
-    // După înregistrare cu succes, îl trimitem la login 
-    // (sau direct în dashboard, depinde cum decideți arhitectura)
     router.push('/login')
 
   } catch (error: any) {
     console.error('Eroare la înregistrare:', error)
-    
-    // Gestionarea erorilor venite de la Quarkus
+
     if (axios.isAxiosError(error) && error.response) {
-      if (error.response.status === 409) {
-        // Status 409 Conflict = Email-ul există deja în baza de date
-        serverError.value = 'This academic email is already registered.'
-      } else {
-        // Alte erori (ex: 400 Bad Request, 500 Server Error)
-        serverError.value = error.response.data?.message || 'Something went wrong. Please try again later.'
-      }
+      serverError.value =
+        error.response.data?.message ||
+        'Something went wrong. Please try again later.'
     } else {
       serverError.value = 'Network error. Please check your connection.'
     }
   } finally {
-    // Oprim spinner-ul indiferent dacă a fost succes sau eroare
     isLoading.value = false
   }
 }
+
 </script>
 
 <template>
