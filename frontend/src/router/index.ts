@@ -29,6 +29,12 @@ const router = createRouter({
       path: '/social',
       name: 'Social',
       component: SocialView
+    },
+    // NOU: Ruta pentru mediul izolat de testare
+    {
+      path: '/playground',
+      name: 'playground',
+      component: () => import('../views/PlaygroundView.vue')
     }
   ]
 })

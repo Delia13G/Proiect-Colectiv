@@ -1,7 +1,12 @@
+<script setup lang="ts">
+import SidebarLeft from '../components/pro/SidebarLeft.vue';
+import TalentGrid from '../components/pro/TalentGrid.vue';
+import FilterSidebar from '../components/pro/FilterSidebar.vue';
+</script>
+
 <template>
   <div class="h-screen w-screen bg-slate-950 text-slate-100 flex flex-col overflow-hidden font-sans">
-    <!-- Top Navigation Bar -->
-    <TopNavBar />
+    <!-- Top Navigation Bar Generic -->
 
     <!-- Zona de lucru principală pe 3 coloane -->
     <div class="flex-1 flex overflow-hidden">
@@ -18,10 +23,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import TopNavBar from '../components/pro/TopNavBar.vue';
-import SidebarLeft from '../components/pro/SidebarLeft.vue';
-import TalentGrid from '../components/pro/TalentGrid.vue';
-import FilterSidebar from '../components/pro/FilterSidebar.vue';
-</script>
