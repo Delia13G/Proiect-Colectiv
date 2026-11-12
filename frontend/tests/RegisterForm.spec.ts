@@ -20,31 +20,29 @@ vi.mock('axios')
 describe('RegisterForm.vue', () => {
   
   it('prevents submission when fields are empty', async () => {
-    const wrapper = mount(RegisterForm)
-    
-    // Declanșăm direct submit-ul
-    await wrapper.find('form').trigger('submit.prevent')
-    
-    // Verificăm erorile apărute din funcția `computed`
-    expect(wrapper.text()).toContain('First name is required')
-    expect(wrapper.text()).toContain('Email is required')
-    expect(wrapper.text()).toContain('You must accept the terms')
-  })
+  const wrapper = mount(RegisterForm)
 
-  it('rejects non-academic emails', async () => {
-    const wrapper = mount(RegisterForm)
-    const emailInput = wrapper.find('input[type="email"]')
-    
-    // Introducem un email non-academic
-    await emailInput.setValue('student_oarecare@gmail.com')
-    await emailInput.trigger('blur')
-    
-    // Așteptăm ca Vue să actualizeze interfața
-    await wrapper.vm.$nextTick()
-    
-    // Verificăm validarea specifică
-    expect(wrapper.text()).toContain('Must be a valid university email')
-  })
+  await wrapper.find('form').trigger('submit.prevent')
+
+  expect(wrapper.text()).toContain('First name is required')
+  expect(wrapper.text()).toContain('Last name is required')
+  expect(wrapper.text()).toContain('Personal email is required')
+  expect(wrapper.text()).toContain('You must accept the terms')
+})
+
+  it('rejects invalid academic emails', async () => {
+  const wrapper = mount(RegisterForm)
+
+  const emailInput = wrapper.find('#studentEmail')
+
+  await emailInput.setValue('student_oarecare@gmail.com')
+  await emailInput.trigger('blur')
+  await wrapper.vm.$nextTick()
+
+  expect(wrapper.text()).toContain(
+    'Must be a valid university email (.edu, stud.*, etc.)'
+  )
+})
 
   it('shows error when passwords do not match', async () => {
     const wrapper = mount(RegisterForm)

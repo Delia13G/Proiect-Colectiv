@@ -6,6 +6,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 import java.util.List;
+import io.smallrye.jwt.build.Jwt;
+import java.time.Duration;
 
 @ApplicationScoped
 public class AuthService {
@@ -19,7 +21,7 @@ public class AuthService {
     );
 
     @Transactional
-    public User registerUser(String username, String email, String studentEmail, String password) {
+    public User registerUser(String username, String email, String studentEmail,String phone, String password) {
         
         // 1. Verificare unicitate pentru emailul principal și username
         if (User.count("email", email) > 0) {
@@ -49,9 +51,31 @@ public class AuthService {
         newUser.username = username;
         newUser.email = email;
         newUser.studentEmail = studentEmail;
+        newUser.phone = phone;
         newUser.passwordHash = BcryptUtil.bcryptHash(password);
 
         newUser.persist();
         return newUser;
+    }
+    public String authenticate(String email, String password) {
+        // 1. Căutăm utilizatorul după email-ul principal folosind Panache
+        User user = User.find("email", email).firstResult();
+
+        // 2. Verificăm dacă utilizatorul a fost găsit și dacă parola introdusă este corectă
+        // Folosim BcryptUtil.matches din Elytron pentru a compara parola raw cu hash-ul
+        if (user == null || !BcryptUtil.matches(password, user.passwordHash)) {
+            return null; // Returnăm null dacă datele sunt incorecte
+        }
+
+        // 3. Verificăm dacă acest utilizator și-a pus o adresă de student la înregistrare
+        boolean isStudent = user.studentEmail != null && !user.studentEmail.trim().isEmpty();
+
+        // 4. Generăm token-ul JWT, injectând boolean-ul isStudent cerut de frontend
+        return Jwt.issuer("https://cliq.com/issuer")
+                .upn(user.email)
+                .groups("User")
+                .claim("isStudent", isStudent)
+                .expiresIn(Duration.ofHours(24))
+                .sign();
     }
 }
