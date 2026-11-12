@@ -23,9 +23,9 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
       </svg>
       <input
-        v-model="searchQuery"
+        v-model="filters.searchQuery"
         type="text"
-        placeholder="Căutare Skills / Tehnologii"
+        placeholder="Căutare după nume, skill sau rol..."
         class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/40 transition-all"
       />
     </div>
@@ -35,7 +35,7 @@
       <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Domeniu</label>
       <div class="relative">
         <select
-          v-model="selectedDomain"
+          v-model="filters.selectedDomain"
           class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-200 focus:outline-none focus:border-indigo-500/60 appearance-none cursor-pointer transition-all"
         >
           <option value="it" class="bg-slate-900 text-white">IT & Dezvoltare Software</option>
@@ -79,8 +79,8 @@
           :key="skill"
           type="button"
           @click="toggleSkill(skill)"
-          :class="selectedSkills.includes(skill)
-            ? 'bg-indigo-600 text-white border-indigo-400/50'
+          :class="filters.selectedSkills.includes(skill)
+            ? 'bg-indigo-600 text-white border-indigo-400/50 shadow-[0_0_10px_rgba(79,70,229,0.4)]'
             : 'bg-white/5 text-slate-400 border-white/10 hover:text-white'"
           class="px-2.5 py-1 rounded-lg text-[10px] font-semibold border transition-all"
         >
@@ -94,11 +94,11 @@
       <!-- Vârstă -->
       <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between text-xs">
-          <span class="text-slate-400 font-medium">Vârstă</span>
-          <span class="text-white font-mono font-bold">{{ ageRange }} ani</span>
+          <span class="text-slate-400 font-medium">Vârstă maximă</span>
+          <span class="text-white font-mono font-bold">{{ filters.maxAge }} ani</span>
         </div>
         <input
-          v-model="ageRange"
+          v-model.number="filters.maxAge"
           type="range"
           min="18"
           max="30"
@@ -110,10 +110,10 @@
       <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between text-xs">
           <span class="text-slate-400 font-medium">Distanță</span>
-          <span class="text-white font-mono font-bold">{{ distance }} km</span>
+          <span class="text-white font-mono font-bold">{{ filters.maxDistance }} km</span>
         </div>
         <input
-          v-model="distance"
+          v-model.number="filters.maxDistance"
           type="range"
           min="1"
           max="50"
@@ -128,13 +128,13 @@
       <label class="flex items-center justify-between cursor-pointer">
         <span class="text-xs text-slate-300 font-medium">Disponibil pentru internship</span>
         <div class="relative">
-          <input v-model="availableForInternship" type="checkbox" class="sr-only" />
+          <input v-model="filters.availableForInternship" type="checkbox" class="sr-only" />
           <div
-            :class="availableForInternship ? 'bg-indigo-600' : 'bg-slate-800'"
+            :class="filters.availableForInternship ? 'bg-indigo-600' : 'bg-slate-800'"
             class="w-10 h-5.5 rounded-full transition-colors border border-white/10 shadow-inner"
           ></div>
           <div
-            :class="availableForInternship ? 'translate-x-4.5 bg-white' : 'translate-x-0.5 bg-slate-400'"
+            :class="filters.availableForInternship ? 'translate-x-4.5 bg-white' : 'translate-x-0.5 bg-slate-400'"
             class="absolute top-0.5 left-0.5 w-4.5 h-4.5 rounded-full transition-transform duration-200"
           ></div>
         </div>
@@ -144,13 +144,13 @@
       <label class="flex items-center justify-between cursor-pointer">
         <span class="text-xs text-slate-300 font-medium">Doar studenți verificați</span>
         <div class="relative">
-          <input v-model="onlyVerifiedStudents" type="checkbox" class="sr-only" />
+          <input v-model="filters.onlyVerifiedStudents" type="checkbox" class="sr-only" />
           <div
-            :class="onlyVerifiedStudents ? 'bg-indigo-600' : 'bg-slate-800'"
+            :class="filters.onlyVerifiedStudents ? 'bg-indigo-600' : 'bg-slate-800'"
             class="w-10 h-5.5 rounded-full transition-colors border border-white/10 shadow-inner"
           ></div>
           <div
-            :class="onlyVerifiedStudents ? 'translate-x-4.5 bg-white' : 'translate-x-0.5 bg-slate-400'"
+            :class="filters.onlyVerifiedStudents ? 'translate-x-4.5 bg-white' : 'translate-x-0.5 bg-slate-400'"
             class="absolute top-0.5 left-0.5 w-4.5 h-4.5 rounded-full transition-transform duration-200"
           ></div>
         </div>
@@ -161,33 +161,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useProFilters } from '../../composables/useProFilters';
 
-const searchQuery = ref('');
-const selectedDomain = ref('it');
+const { filters, toggleSkill, resetFilters } = useProFilters();
 const showSkills = ref(true);
-const selectedSkills = ref<string[]>(['Java', 'Vue 3', 'Python']);
-const availableSkills = ['Java', 'Vue 3', 'Python', 'React', 'C++', 'SQL', 'Figma', 'Quarkus', 'Docker'];
-
-const ageRange = ref(24);
-const distance = ref(15);
-const availableForInternship = ref(true);
-const onlyVerifiedStudents = ref(false);
-
-function toggleSkill(skill: string) {
-  if (selectedSkills.value.includes(skill)) {
-    selectedSkills.value = selectedSkills.value.filter((s) => s !== skill);
-  } else {
-    selectedSkills.value.push(skill);
-  }
-}
-
-function resetFilters() {
-  searchQuery.value = '';
-  selectedDomain.value = 'it';
-  selectedSkills.value = ['Java', 'Vue 3'];
-  ageRange.value = 24;
-  distance.value = 15;
-  availableForInternship.value = true;
-  onlyVerifiedStudents.value = false;
-}
+const availableSkills = ['Java', 'Vue 3', 'Python', 'React', 'C++', 'SQL', 'Figma', 'Quarkus', 'Docker', 'UI/UX'];
 </script>
