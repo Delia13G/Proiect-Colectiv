@@ -127,8 +127,7 @@ const handleRegister = async () => {
 
   try {
     // Apelăm endpoint-ul de Quarkus
-    const response = await axios.post('http://localhost:8080/api/auth/register', {
-      firstName: firstName.value,
+      await axios.post('http://localhost:8080/api/auth/register', {      firstName: firstName.value,
       lastName: lastName.value,
       email: personalEmail.value,
       studentEmail: studentEmail.value || null, // Trimitem null dacă e gol
