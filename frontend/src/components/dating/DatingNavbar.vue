@@ -1,9 +1,20 @@
 
 <script setup lang="ts">
 import { Heart, SlidersHorizontal, Sparkles } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useLensStore } from '../../stores/lensStore'
 
-const activeLens = ref('DATE')
+const router = useRouter()
+const route = useRoute()
+const lensStore = useLensStore()
+
+const activeLens = computed(() => {
+  if (route.path.startsWith('/dating')) return 'DATE'
+  if (route.path.startsWith('/social')) return 'SOCIAL'
+  if (route.path.startsWith('/pro')) return 'PRO'
+  return ''
+})
 
 const emit = defineEmits<{
   (event: 'open-filters'): void
@@ -11,7 +22,14 @@ const emit = defineEmits<{
 }>()
 
 const selectLens = (lens: string) => {
-  activeLens.value = lens
+  const routes: Record<string, string> = {
+    DATE: '/dating',
+    SOCIAL: '/social',
+    PRO: '/pro'
+  }
+
+  lensStore.setLens(lens)
+  router.push(routes[lens])
 }
 </script>
 
@@ -30,13 +48,11 @@ const selectLens = (lens: string) => {
         @click="selectLens(lens)"
       >
         {{ lens }}
-
         <Heart v-if="lens === 'DATE'" :size="15" />
       </button>
     </nav>
 
     <div class="navbar-actions">
-
       <button class="likes-button" @click="emit('open-likes')">
         <Sparkles :size="17" />
         Likes You
@@ -46,7 +62,6 @@ const selectLens = (lens: string) => {
         <SlidersHorizontal :size="19" />
         Filters
       </button>
-
     </div>
   </header>
 </template>
