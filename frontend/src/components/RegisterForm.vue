@@ -131,7 +131,7 @@ const handleRegister = async () => {
       .replace(/\s+/g, '')
 
     // Apelăm endpoint-ul de Quarkus prin proxy-ul Vite (/api) pentru a evita problemele de CORS
-    const response = await axios.post('/api/auth/register', {
+    await axios.post('/api/auth/register', {
       username: generatedUsername,
       firstName: firstName.value.trim(),
       lastName: lastName.value.trim(),
