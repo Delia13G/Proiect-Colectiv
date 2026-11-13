@@ -37,9 +37,9 @@ const checkCapsLock = (event: KeyboardEvent) => {
 }
 
 const isValidEmail = (emailStr: string) => {
-  const emailRegex = /^[^\s@]+@(gmail\.com|yahoo\.com)$/;
-  return emailRegex.test(emailStr);
-};
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(emailStr.trim())
+}
 
 const isAcademicEmail = (emailStr: string) => {
   const domainParts = emailStr.split('@')
@@ -88,10 +88,10 @@ const errors = computed(() => {
   if (!lastName.value.trim()) errs.lastName = 'Last name is required'
   
   if (!personalEmail.value) {
-  errs.personalEmail = 'Personal email is required'
-} else if (!isValidEmail(personalEmail.value)) {
-  errs.personalEmail = 'Must be a valid Gmail or Yahoo address'
-}
+    errs.personalEmail = 'Personal email is required'
+  } else if (!isValidEmail(personalEmail.value)) {
+    errs.personalEmail = 'Please enter a valid email address'
+  }
 
   if (studentEmail.value && !isAcademicEmail(studentEmail.value)) {
   errs.studentEmail = 'Must be a valid university email (.edu, stud.*, etc.)'
@@ -126,12 +126,18 @@ const handleRegister = async () => {
   serverError.value = ''
 
   try {
-    // Apelăm endpoint-ul de Quarkus
-      await axios.post('http://localhost:8080/api/auth/register', {      firstName: firstName.value,
-      lastName: lastName.value,
-      email: personalEmail.value,
-      studentEmail: studentEmail.value || null, // Trimitem null dacă e gol
-      phone: phone.value || null, // Trimitem null dacă e gol
+    const generatedUsername = `${firstName.value.trim()}.${lastName.value.trim()}`
+      .toLowerCase()
+      .replace(/\s+/g, '')
+
+    // Apelăm endpoint-ul de Quarkus prin proxy-ul Vite (/api) pentru a evita problemele de CORS
+    await axios.post('/api/auth/register', {
+      username: generatedUsername,
+      firstName: firstName.value.trim(),
+      lastName: lastName.value.trim(),
+      email: personalEmail.value.trim(),
+      studentEmail: studentEmail.value.trim() || null, // Trimitem null dacă e gol
+      phone: phone.value.trim() || null, // Trimitem null dacă e gol
       password: password.value
     })
 
@@ -141,9 +147,13 @@ const handleRegister = async () => {
     console.error('Eroare la înregistrare:', error)
 
     if (axios.isAxiosError(error) && error.response) {
-      serverError.value =
-        error.response.data?.message ||
-        'Something went wrong. Please try again later.'
+      if (error.response.status === 409) {
+        // Status 409 Conflict = Email-ul sau username-ul există deja în baza de date
+        serverError.value = error.response.data?.message || 'This email is already registered.'
+      } else {
+        // Alte erori (ex: 400 Bad Request, 500 Server Error)
+        serverError.value = error.response.data?.message || 'Something went wrong. Please try again later.'
+      }
     } else {
       serverError.value = 'Network error. Please check your connection.'
     }
@@ -208,7 +218,7 @@ const handleRegister = async () => {
           v-model="personalEmail"
           @blur="touched.personalEmail = true"
           type="email" 
-          placeholder="nume@gmail.com sau yahoo.com" 
+          placeholder="name@example.com" 
           :disabled="isLoading"
           class="w-full px-4 py-3 bg-black/20 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all disabled:opacity-50"
           :class="(touched.personalEmail && errors.personalEmail) ? 'border-rose-500 focus:ring-rose-500' : (touched.personalEmail && !errors.personalEmail) ? 'border-emerald-500/50 focus:ring-emerald-500' : 'border-white/5 focus:ring-indigo-500'"

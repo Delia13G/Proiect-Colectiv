@@ -23,9 +23,19 @@ public class AuthResource {
     @POST
     @Path("/register")
     public Response register(RegisterRequest request) {
-        // Apelăm logica de business actualizată, pasând și noul studentEmail
-        // Dacă datele sunt invalide, serviciul va arunca automat un BadRequestException (HTTP 400)
-        authService.registerUser(request.username(), request.email(), request.studentEmail(),request.phone(), request.password());
+        if (request == null) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+        // Apelăm logica de business actualizată, pasând și firstName, lastName, studentEmail
+        authService.registerUser(
+            request.username(),
+            request.firstName(),
+            request.lastName(),
+            request.email(),
+            request.studentEmail(),
+            request.phone(),
+            request.password()
+        );
         
         // Dacă totul a decurs cu succes, returnăm statusul HTTP 201 (Created)
         return Response.status(Response.Status.CREATED).build();
