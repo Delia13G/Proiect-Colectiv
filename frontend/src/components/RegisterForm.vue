@@ -112,17 +112,19 @@ const errors = computed(() => {
   return errs
 })
 
+
 const handleRegister = async () => {
-  // Marcăm toate câmpurile ca fiind atinse pentru a declanșa erorile vizuale
-  Object.keys(touched.value).forEach(key => touched.value[key as keyof typeof touched.value] = true)
+  Object.keys(touched.value).forEach(key => {
+    touched.value[key as keyof typeof touched.value] = true
+  })
 
   const hasErrors = Object.values(errors.value).some(error => error !== '')
-  
+
   if (hasErrors || isLoading.value) return
-  
+
   isLoading.value = true
-  serverError.value = '' // Resetăm orice eroare anterioară de la server
-  
+  serverError.value = ''
+
   try {
     const generatedUsername = `${firstName.value.trim()}.${lastName.value.trim()}`
       .toLowerCase()
@@ -139,16 +141,11 @@ const handleRegister = async () => {
       password: password.value
     })
 
-    console.log('Cont creat cu succes:', response.data)
-    
-    // După înregistrare cu succes, îl trimitem la login 
-    // (sau direct în dashboard, depinde cum decideți arhitectura)
     router.push('/login')
 
   } catch (error: any) {
     console.error('Eroare la înregistrare:', error)
-    
-    // Gestionarea erorilor venite de la Quarkus
+
     if (axios.isAxiosError(error) && error.response) {
       if (error.response.status === 409) {
         // Status 409 Conflict = Email-ul sau username-ul există deja în baza de date
@@ -161,10 +158,10 @@ const handleRegister = async () => {
       serverError.value = 'Network error. Please check your connection.'
     }
   } finally {
-    // Oprim spinner-ul indiferent dacă a fost succes sau eroare
     isLoading.value = false
   }
 }
+
 </script>
 
 <template>

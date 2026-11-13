@@ -1,6 +1,9 @@
+
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
+import DatingView from '../views/DatingView.vue'
+import DatingOnboarding from '../views/DatingOnboardingView.vue'
 import SocialView from '../views/SocialView.vue'
 
 const router = createRouter({
@@ -19,6 +22,16 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: RegisterView
+    },
+    {
+      path: '/dating',
+      name: 'dating',
+      component: DatingView
+    },
+    {
+      path: '/dating/onboarding',
+      name: 'DatingOnboarding',
+      component: DatingOnboarding
     },
     {
       path: '/pro',
