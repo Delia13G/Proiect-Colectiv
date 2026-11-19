@@ -167,8 +167,9 @@ function previousPhoto() {
 .profile-card {
   position: relative;
   width: 100%;
-  max-width: 460px;
+  /* max-width: 460px; <-- ȘTERGE ASTA SAU COMENTEAZ-O */
   height: 570px;
+  /* Restul rămâne la fel: */
   border-radius: 25px;
   overflow: hidden;
   background: #202033;

@@ -1,25 +1,36 @@
+<!-- frontend/src/views/ProView.vue -->
 <script setup lang="ts">
-import SidebarLeft from '../components/pro/SidebarLeft.vue';
-import TalentGrid from '../components/pro/TalentGrid.vue';
-import FilterSidebar from '../components/pro/FilterSidebar.vue';
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
+// Aici vom putea adăuga funcționalități specifice mediului PRO pe viitor
 </script>
 
 <template>
-  <div class="h-screen w-screen bg-slate-950 text-slate-100 flex flex-col overflow-hidden font-sans">
-    <!-- Top Navigation Bar Generic -->
-
-    <!-- Zona de lucru principală pe 3 coloane -->
-    <div class="flex-1 flex overflow-hidden">
-      <!-- Coloana 1: Sidebar Stânga (Proiecte & Conexiuni) -->
-      <SidebarLeft />
-
-      <!-- Coloana 2: Zona Centrală (TalentGrid) -->
-      <main class="flex-1 flex flex-col overflow-hidden bg-slate-950/40">
-        <TalentGrid />
-      </main>
-
-      <!-- Coloana 3: Sidebar Dreapta (Panou Filtre) -->
-      <FilterSidebar />
-    </div>
+  <!-- Acest container ocupă tot spațiul lăsat liber de Sidebar și TopNavbar din App.vue -->
+  <div class="h-full w-full flex flex-col relative overflow-hidden bg-slate-950">
+    
+    <!-- Aici Vue Router va injecta DINAMIC fie ChatListView, fie MainChatView -->
+    <!-- Funcție de URL (/pro sau /pro/chat/1) -->
+    <router-view v-slot="{ Component }">
+      <transition name="page-fade" mode="out-in">
+        <component :is="Component" />
+      </transition>
+    </router-view>
+    
   </div>
 </template>
+
+<style scoped>
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.page-fade-enter-from {
+  opacity: 0;
+  transform: translateX(10px);
+}
+.page-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+</style>

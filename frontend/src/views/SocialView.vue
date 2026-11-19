@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import SocialSidebarLeft from '../components/social/SocialSidebarLeft.vue';
 import SocialGrid from '../components/social/SocialGrid.vue';
 import SocialFilterSidebar from '../components/social/SocialFilterSidebar.vue';
 </script>

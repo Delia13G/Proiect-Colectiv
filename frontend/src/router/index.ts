@@ -1,9 +1,8 @@
-
+// frontend/src/router/index.ts
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import DatingView from '../views/DatingView.vue'
-import DatingOnboarding from '../views/DatingOnboardingView.vue'
 import SocialView from '../views/SocialView.vue'
 
 const router = createRouter({
@@ -16,34 +15,54 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: LoginView
+      component: LoginView,
+      meta: { hideLayout: true } // <-- Adăugat: Ascunde Sidebar și TopBar
     },
     {
       path: '/register',
       name: 'register',
-      component: RegisterView
+      component: RegisterView,
+      meta: { hideLayout: true } // <-- Adăugat: Ascunde Sidebar și TopBar
     },
     {
       path: '/dating',
       name: 'dating',
       component: DatingView
     },
-    {
-      path: '/dating/onboarding',
-      name: 'DatingOnboarding',
-      component: DatingOnboarding
-    },
+    // ==========================================
+    // RUTA PRO (Nested Routing)
+    // ==========================================
     {
       path: '/pro',
-      name: 'pro',
-      component: () => import('../views/ProView.vue')
+      component: () => import('../views/ProView.vue'),
+      children: [
+        {
+          path: '', 
+          name: 'pro-home',
+          component: () => import('../components/pro/ProExploreView.vue')
+        },
+        {
+          path: 'chats', 
+          name: 'pro-chat-list',
+          component: () => import('../components/chat/ChatListView.vue'),
+          props: { activeLens: 'PRO' }
+        },
+        {
+          path: 'chat/:id', 
+          name: 'chat-detail',
+          component: () => import('../components/chat/MainChatView.vue'),
+          props: (route) => ({ 
+            chatId: Number(route.params.id), 
+            activeLens: route.query.lens || 'PRO' 
+          })
+        }
+      ]
     },
     {
       path: '/social',
       name: 'Social',
       component: SocialView
     },
-    // NOU: Ruta pentru mediul izolat de testare
     {
       path: '/playground',
       name: 'playground',

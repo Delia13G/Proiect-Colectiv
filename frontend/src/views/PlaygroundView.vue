@@ -1,264 +1,174 @@
+<!-- frontend/src/views/PlaygroundView.vue -->
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import { ref } from 'vue';
+import UserMiniProfile from '../components/layout/UserMiniProfile.vue';
+import DateSidebarContent from '../components/dating/DateSidebarContent.vue';
+import SocialSidebarContent from '../components/social/SocialSidebarContent.vue';
+import { Plus } from 'lucide-vue-next';
+import ProSidebarContent from '../components/pro/ProSidebarContent.vue';
 
-// ---------------------------------------------------------
-// RECOMANDAREA 4: Sincronizarea cu Router-ul (Pregătire)
-// ---------------------------------------------------------
-// În mediul de testare folosim un ref local. Când mutăm în producție, 
-// vom decomenta importul useRoute și watcher-ul de mai jos.
-// import { useRoute } from 'vue-router';
-// const route = useRoute();
+const myProjects = ref([
+  { id: 1, title: 'Proiect Colectiv', category: 'Aplicație Web', icon: '💻', isNew: true, progress: 85 }, // Bară verde/indigo (85%)
+  { id: 2, title: 'Licență AI', category: 'Research', progress: 100 }, // Bară verde plină
+  { id: 3, title: 'Design Cliq', category: 'UI/UX', icon: '🎨', dueSoon: true, progress: 40 } // Iconiță ceas + ring amber!
+]);
 
-const activeLens = ref('PRO');
-const isDropdownOpen = ref(false);
-
-const profileContainerRef = ref<HTMLElement | null>(null);
-
-// Funcția care verifică unde s-a dat click
-const handleClickOutside = (event: MouseEvent) => {
-  if (
-    isDropdownOpen.value && 
-    profileContainerRef.value && 
-    !profileContainerRef.value.contains(event.target as Node)
-  ) {
-    isDropdownOpen.value = false;
-  }
-};
-
-const handleKeydown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape' && isDropdownOpen.value) {
-    isDropdownOpen.value = false;
-  }
-};
-
-// ---------------------------------------------------------
-// RECOMANDAREA 1 & 3: Notificări și Componente Iconițe
-// ---------------------------------------------------------
-const LENSES = [
+const proChats = ref([
   { 
-    id: 'DATE', 
-    label: 'DATE', 
-    activeTextColor: 'text-[#F43F5E]', 
-    pillClass: 'bg-[#F43F5E]/10 border-[#F43F5E]/40 shadow-[0_0_20px_rgba(244,63,94,0.35)] border',
-    logoColor: 'to-[#F43F5E]',
-    badgeClass: 'bg-[#F43F5E]/20 text-[#F43F5E] border-[#F43F5E]/30',
-    notifications: 0, // Fără notificări
-    iconPath: 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z'
+    id: 1, name: 'Pavel', message: 'Am urcat scripturile', avatar: 'https://i.pravatar.cc/100?img=13', unreadCount: 1, 
+    role: 'Backend' as const, activityStatus: 'coding' as const, isPinned: true 
+  }, // Pavel scrie cod! Badge "Backend", Pinned.
+  { 
+    id: 2, name: 'Echipa DevOps', message: 'A picat serverul!', avatar: 'https://i.pravatar.cc/100?img=33', unreadCount: 5, 
+    isUrgent: true, hasMention: true 
+  }, // Roșu/Chihlimbar, @Tu, urgent!
+  { 
+    id: 3, name: 'Ioana', message: '', avatar: 'https://i.pravatar.cc/100?img=5', 
+    role: 'UI/UX' as const, messageType: 'file' as const
+  } // Document încărcat.
+]);
+
+const squads = ref([
+  { id: 1, name: 'Facultate Info MIE', image: 'https://i.pravatar.cc/100?img=1', membersCount: 124, isJoined: true, hasActivity: true },
+  { id: 2, name: 'Echipa Proiect 5', image: 'https://i.pravatar.cc/100?img=2', membersCount: 8, isJoined: true },
+  { id: 3, name: 'Hackathon Cluj', image: 'https://i.pravatar.cc/100?img=3', membersCount: 45, isJoined: false }, // Va avea butonul JOIN
+  { id: 4, name: 'Grup Ieșiri', image: 'https://i.pravatar.cc/100?img=15', membersCount: 12, isJoined: false } // Va avea butonul JOIN
+]);
+
+const socialChats = ref([
+  { 
+    id: 1, name: 'Ioana', message: '', avatar: 'https://i.pravatar.cc/100?img=9', active: true, 
+    isTyping: true, isPinned: true 
+  }, // Ioana va avea Pin și "scrie..." cu puncte verzi săltărețe.
+  { 
+    id: 2, name: 'Grup Ieșiri', message: 'Cine vine la un boardgame?', avatar: 'https://i.pravatar.cc/100?img=11', active: false, unreadCount: 3, 
+    hasMention: true 
+  }, // Vei vedea "@Tu" roșu și un badge roșu cu `@` care ignoră tot și sare în ochi.
+  { 
+    id: 3, name: 'Mihai', message: '', avatar: 'https://i.pravatar.cc/100?img=12', active: true, 
+    messageType: 'image' as const
+  }, // Mihai trimite o poză, va apărea o iconiță de Cameră verde.
+  { 
+    id: 4, name: 'Spam Bot', message: 'Promoție!', avatar: 'https://i.pravatar.cc/100?img=15', active: false, unreadCount: 15, 
+    isMuted: true 
+  } // Tot cardul va fi estompat vizual, poza ușor alb-negru (grayscale), și badge-ul de mesaje va fi gri, nu verde neon.
+]);
+
+const dateChats = ref([
+  { 
+    id: 1, 
+    name: 'Elena', 
+    message: 'Abia aștept!', 
+    image: 'https://i.pravatar.cc/100?img=4', 
+    unread: false, 
+    online: true, 
+    isMine: true,          // Spunem că ultimul mesaj a fost trimis de mine ("Tu: Abia aștept!")
+    status: 'read' as const, // Randează double-check de culoare roz
+    timestamp: new Date() 
   },
   { 
-    id: 'SOCIAL', 
-    label: 'SOCIAL', 
-    activeTextColor: 'text-emerald-400', 
-    pillClass: 'bg-emerald-500/10 border-emerald-400/40 shadow-[0_0_20px_rgba(16,185,129,0.35)] border',
-    logoColor: 'to-emerald-500',
-    badgeClass: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-    notifications: 3, // Exemplu: 3 notificări necitite
-    iconPath: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z'
-  },
-  { 
-    id: 'PRO', 
-    label: 'PRO', 
-    activeTextColor: 'text-indigo-400', 
-    pillClass: 'bg-indigo-500/10 border-indigo-400/40 shadow-[0_0_20px_rgba(79,70,229,0.35)] border',
-    logoColor: 'to-indigo-500',
-    badgeClass: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
-    notifications: 0,
-    iconPath: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'
+    id: 2, 
+    name: 'Diana', 
+    message: 'Te sun mai târziu.', 
+    image: 'https://i.pravatar.cc/100?img=5', 
+    unread: false, 
+    online: false,
+    isMine: true,
+    status: 'delivered' as const, // Randează double-check de culoare gri
+    timestamp: new Date(Date.now() - 3600000)
   }
+]);
+
+// 1. STATE SIMPLU LOCAL
+const activeTab = ref('DATE'); 
+
+// DATE PENTRU LENTILA 'DATE' (Aici e magia cu 'online')
+const dateMatches = [
+  { id: 1, name: 'Elena', image: 'https://i.pravatar.cc/100?img=4', online: true }, // Elena va avea cerc roșu
+  { id: 2, name: 'Alex', image: 'https://i.pravatar.cc/100?img=7', online: false },
+  { id: 3, name: 'Diana', image: 'https://i.pravatar.cc/100?img=5', online: true }  // Diana va avea cerc roșu
 ];
 
-const activeConfig = computed(() => LENSES.find(l => l.id === activeLens.value) || LENSES[2]);
-
-// ---------------------------------------------------------
-// RECOMANDAREA 2: Smart Scroll Logic
-// ---------------------------------------------------------
-const showNav = ref(true);
-const lastScrollY = ref(0);
-
-const handleScroll = () => {
-  const currentScrollY = window.scrollY;
-  // Menținem bara vizibilă dacă suntem foarte aproape de sus
-  if (currentScrollY < 60) {
-    showNav.value = true;
-  } else if (currentScrollY > lastScrollY.value) {
-    // Scroll în jos -> ascundem bara
-    showNav.value = false;
-  } else {
-    // Scroll în sus -> afișăm bara
-    showNav.value = true;
-  }
-  lastScrollY.value = currentScrollY;
-};
-
-// ---------------------------------------------------------
-// Logică Sliding Pill & State
-// ---------------------------------------------------------
-const buttonRefs = ref<HTMLElement[]>([]);
-const pillStyle = ref({ left: '0px', width: '0px', height: '0px', top: '0px' });
-
-const switchLens = (lensId: string) => {
-  activeLens.value = lensId;
-};
-
-const toggleDropdown = () => {
-  isDropdownOpen.value = !isDropdownOpen.value;
-};
-
-const updatePillPosition = async () => {
-  await nextTick();
-  const index = LENSES.findIndex(l => l.id === activeLens.value);
-  const btn = buttonRefs.value[index];
-  
-  if (btn) {
-    pillStyle.value = {
-      left: `${btn.offsetLeft}px`,
-      top: `${btn.offsetTop}px`,
-      width: `${btn.offsetWidth}px`,
-      height: `${btn.offsetHeight}px`
-    };
+// FUNCȚIA CARE DECLANȘEAZĂ ANIMAȚIA
+const handleOpenChat = (id: number) => {
+  console.log('Open Chat:', id);
+  // Găsim chat-ul și îl marcăm ca citit.
+  // Deoarece e "unread: false", computed-ul `sortedChats` îl va muta automat mai jos în listă!
+  const chat = dateChats.value.find(c => c.id === id);
+  if (chat && chat.unread) {
+    chat.unread = false;
   }
 };
 
-watch(activeLens, updatePillPosition);
 
-// Când trecem în producție, acest watcher va reacționa la butonul de "Back" din browser
-// watch(() => route.path, (newPath) => {
-//   if (newPath.includes('/social')) activeLens.value = 'SOCIAL';
-//   else if (newPath.includes('/dating')) activeLens.value = 'DATE';
-//   else activeLens.value = 'PRO';
-// });
-
-onMounted(() => {
-  window.addEventListener('resize', updatePillPosition);
-  window.addEventListener('scroll', handleScroll, { passive: true });
-  document.addEventListener('click', handleClickOutside);
-  document.addEventListener('keydown', handleKeydown);
-  setTimeout(updatePillPosition, 50);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('resize', updatePillPosition);
-  window.removeEventListener('scroll', handleScroll);
-  document.removeEventListener('click', handleClickOutside);
-  document.removeEventListener('keydown', handleKeydown);
-});
 </script>
 
 <template>
-  <div class="min-h-[200vh] bg-slate-950 text-white font-sans relative">
+  <div class="h-screen w-full bg-slate-950 text-slate-100 flex font-sans overflow-hidden">
     
-    <!-- HEADER DESKTOP (Acum este sticky și se ascunde la scroll down) -->
-    <<!-- HEADER DESKTOP & MOBILE TOP (Fix, nu dispare la scroll) -->
-    <header class="sticky top-0 h-16 md:h-20 px-4 md:px-8 border-b border-white/5 bg-slate-900/50 backdrop-blur-xl flex items-center justify-between select-none z-50">
+    <!-- SIDEBAR -->
+    <aside class="w-72 h-full flex flex-col gap-6 p-4 bg-slate-900/40 backdrop-blur-xl border-r border-white/10 select-none overflow-y-auto">
       
-      <!-- Zona Logo -->
-      <div class="flex items-center gap-2">
-        <span :class="['text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 bg-clip-text text-transparent transition-colors duration-500', activeConfig.logoColor]">
-          Cliq
-        </span>
-        <span :class="['text-[9px] md:text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border transition-colors duration-500 mt-1', activeConfig.badgeClass]">
-          {{ activeLens }}
-        </span>
-      </div>
+      <!-- PROFIL -->
+      <UserMiniProfile :activeLens="activeTab" />
 
-      <!-- DESKTOP NAV -->
-      <nav class="hidden md:flex relative items-center bg-slate-950/60 p-1.5 rounded-full ring-1 ring-white/10 shadow-2xl space-x-2">
+      <transition name="fade" mode="out-in">
         
-        <div class="absolute rounded-full transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] backdrop-blur-md"
-             :style="pillStyle" :class="activeConfig.pillClass"></div>
+        <!-- LENTILA PRO -->
+        <ProSidebarContent 
+          v-if="activeTab === 'PRO'"
+          key="pro"
+          :projects="myProjects"
+          :chats="proChats"
+          :isLoading="false"
+          @create-project="console.log('Deschide modalul de Create Project!')"
+          @open-project="(id) => console.log('Proiect selectat:', id)"
+          @open-chat="(id) => console.log('Chat echipă deschis:', id)"
+        />
 
-        <button
-          v-for="(lens, index) in LENSES"
-          :key="lens.id"
-          :ref="el => { if (el) buttonRefs[index] = el as HTMLElement }"
-          type="button"
-          @click="switchLens(lens.id)"
-          class="relative z-10 px-6 py-2 rounded-full text-sm font-bold transition-colors duration-300 outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
-          :class="activeLens === lens.id ? activeConfig.activeTextColor : 'text-slate-400 hover:text-white'"
-        >
-          {{ lens.label }}
-          
-          <!-- Notificare Desktop (Bulina roșie) -->
-          <span 
-            v-if="lens.notifications > 0" 
-            class="absolute top-1 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 border-2 border-slate-950 text-[9px] text-white"
-          >
-            {{ lens.notifications }}
-          </span>
-        </button>
-      </nav>
+        <!-- LENTILA SOCIAL -->
+        <SocialSidebarContent 
+          v-else-if="activeTab === 'SOCIAL'"
+          key="social"
+          :squads="squads"
+          :chats="socialChats"
+          :isLoading="false"
+          @open-group="(idx) => console.log('Grup deschis:', idx)"
+          @open-chat="(id) => console.log('Chat social:', id)"
+        />
 
-      <!-- Profil Utilizator -->
-      <div class="flex items-center gap-3 relative" ref="profileContainerRef">
-        <button 
-          @click="toggleDropdown"
-          class="w-9 h-9 md:w-10 md:h-10 rounded-full border-2 border-slate-700 hover:border-slate-400 transition-colors overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus-visible:ring-indigo-500 shadow-lg"
-          aria-haspopup="true"
-          :aria-expanded="isDropdownOpen"
-        >
-          <img src="https://i.pravatar.cc/150?img=68" alt="Profil utilizator" class="w-full h-full object-cover" />
-        </button>
-
-        <!-- Dropdown -->
-        <transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0 translate-y-2 scale-95" enter-to-class="opacity-100 translate-y-0 scale-100" leave-active-class="transition ease-in duration-150" leave-from-class="opacity-100 translate-y-0 scale-100" leave-to-class="opacity-0 translate-y-2 scale-95">
-          <div v-if="isDropdownOpen" class="absolute right-0 top-12 md:top-14 w-48 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden py-1 z-50">
-            <div class="px-4 py-2 border-b border-slate-800 mb-1">
-              <p class="text-sm font-semibold text-white">Andrei</p>
-              <p class="text-xs text-slate-400 truncate">andrei@cliq.com</p>
-            </div>
-            <button class="w-full text-left block px-4 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition-colors">Setări cont</button>
-            <div class="border-t border-slate-800 mt-1"></div>
-            <button class="w-full text-left block px-4 py-2 text-sm text-rose-400 hover:bg-rose-500/10 transition-colors">Deconectare</button>
-          </div>
-        </transition>
-      </div>
-      
-    </header>
-
-    <!-- MOBILE BOTTOM NAVIGATION (Smart Scroll - se ascunde jos) -->
-    <div 
-      class="md:hidden fixed left-1/2 -translate-x-1/2 z-50 w-max transition-all duration-500 ease-in-out"
-      :class="showNav ? 'bottom-4 translate-y-0 opacity-100' : '-bottom-24 translate-y-24 opacity-0 pointer-events-none'"
-    >
-      <div class="bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-full px-5 py-1.5 flex items-center justify-center gap-5 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+        <!-- LENTILA DATE (Aici am oprit Skeletonul!) -->
+        <DateSidebarContent 
+          v-else-if="activeTab === 'DATE'"
+          key="date"
+          :likesCount="5"
+          :matches="dateMatches"
+          :chats="dateChats"
+          :isLoading="false" 
+          @open-likes="console.log('Open Likes clicked')"
+          @open-chat="handleOpenChat"
+        />
         
-        <button
-          v-for="lens in LENSES"
-          :key="'mobile-' + lens.id"
-          @click="switchLens(lens.id)"
-          class="relative flex flex-col items-center justify-center gap-0.5 w-11 outline-none group"
-        >
-          <!-- Notificare Mobile -->
-          <span 
-            v-if="lens.notifications > 0" 
-            class="absolute top-0 right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-rose-500 border-[1.5px] border-slate-900 text-[8px] text-white z-10"
-          >
-            {{ lens.notifications }}
-          </span>
+      </transition>
+    </aside>
 
-          <svg class="w-5 h-5 transition-all duration-300 group-active:scale-90" :class="activeLens === lens.id ? lens.activeTextColor + ' drop-shadow-md' : 'text-slate-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="lens.iconPath" />
-          </svg>
-          
-          <span class="text-[8px] font-bold tracking-wider transition-colors duration-300" :class="activeLens === lens.id ? lens.activeTextColor : 'text-slate-500'">
-            {{ lens.label }}
-          </span>
-        </button>
-
+    <!-- ZONA DE BUTOANE -->
+    <main class="flex-1 flex flex-col items-center justify-center p-8 bg-slate-900">
+      <h1 class="text-2xl font-bold text-white mb-8">Testează Meniul Lateral</h1>
+      <div class="flex gap-4 p-2 bg-slate-800 rounded-lg">
+        <button @click="activeTab = 'PRO'" :class="activeTab === 'PRO' ? 'bg-indigo-600' : 'bg-slate-700'" class="px-6 py-2 rounded font-bold text-white transition-colors">PRO</button>
+        <button @click="activeTab = 'SOCIAL'" :class="activeTab === 'SOCIAL' ? 'bg-emerald-600' : 'bg-slate-700'" class="px-6 py-2 rounded font-bold text-white transition-colors">SOCIAL</button>
+        <button @click="activeTab = 'DATE'" :class="activeTab === 'DATE' ? 'bg-rose-600' : 'bg-slate-700'" class="px-6 py-2 rounded font-bold text-white transition-colors">DATE</button>
       </div>
-    </div>
-
-    <!-- ZONĂ CONȚINUT FALS (Pentru a testa scroll-ul lung) -->
-    <div class="p-8 md:p-16 text-center max-w-2xl mx-auto mt-10">
-      <h2 class="text-2xl md:text-3xl font-bold mb-4 text-slate-100">Testează Smart Scroll</h2>
-      <p class="text-slate-400 mb-20 text-lg">Fă scroll în josul paginii. Vei observa cum header-ul de sus și "pastila" de jos dispar pentru a-ți lăsa ecranul complet liber pentru conținut. Când faci scroll ușor în sus, reapar.</p>
-      
-      <div class="space-y-8">
-        <div v-for="i in 10" :key="i" class="h-48 bg-slate-900/50 rounded-3xl border border-white/5 flex items-center justify-center text-slate-700 font-bold text-xl">
-          Conținut de probă {{ i }}
-        </div>
-      </div>
-    </div>
+      <!--<p class="text-slate-400 mt-4 text-sm">Schimbă `<DateSidebarContent :isLoading="true" />` ca să vezi iar skeletonul.</p>-->
+    </main>
 
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
+.fade-enter-from,
+.fade-leave-to { opacity: 0; transform: translateX(-10px); }
+</style>
