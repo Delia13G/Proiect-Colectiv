@@ -1,8 +1,12 @@
 package com.proiect.service;
 
 import com.proiect.entity.User;
+import com.proiect.entity.Profile;
+import com.proiect.entity.ProfileType;
 import io.quarkus.elytron.security.common.BcryptUtil;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 import java.util.List;
@@ -20,8 +24,12 @@ public class AuthService {
         ".ubbcluj.ro" // Exemplu de domeniu instituțional specific
     );
 
+    // Injectarea EntityManager pentru salvarea profilelor (PRO-32)
+    @Inject
+    EntityManager em;
+
     @Transactional
-    public User registerUser(String username, String email, String studentEmail,String phone, String password) {
+    public User registerUser(String username, String email, String studentEmail, String phone, String password) {
         
         // 1. Verificare unicitate pentru emailul principal și username
         if (User.count("email", email) > 0) {
@@ -46,23 +54,42 @@ public class AuthService {
             }
         }
 
-        // 3. Creare entitate și salvare
+        // 3. Creare entitate utilizator și salvare
         User newUser = new User();
         newUser.username = username;
         newUser.email = email;
         newUser.studentEmail = studentEmail;
-        newUser.phone = phone;
+        newUser.phone = phone; // Adăugat din main
         newUser.passwordHash = BcryptUtil.bcryptHash(password);
 
-        newUser.persist();
+        newUser.persist(); // Salvarea utilizatorului în baza de date
+        
+        // 4. Generare automată a celor 3 lentile (Profile) pentru noul utilizator (PRO-32)
+        Profile dateProfile = new Profile();
+dateProfile.type = ProfileType.DATE;
+dateProfile.user = newUser;
+
+Profile socialProfile = new Profile();
+socialProfile.type = ProfileType.SOCIAL;
+socialProfile.user = newUser;
+
+Profile proProfile = new Profile();
+proProfile.type = ProfileType.PRO;
+proProfile.user = newUser;
+        
+        // 5. Salvarea lentilelor în baza de date
+        em.persist(dateProfile);
+        em.persist(socialProfile);
+        em.persist(proProfile);
+        
         return newUser;
     }
+
     public String authenticate(String email, String password) {
         // 1. Căutăm utilizatorul după email-ul principal folosind Panache
         User user = User.find("email", email).firstResult();
 
         // 2. Verificăm dacă utilizatorul a fost găsit și dacă parola introdusă este corectă
-        // Folosim BcryptUtil.matches din Elytron pentru a compara parola raw cu hash-ul
         if (user == null || !BcryptUtil.matches(password, user.passwordHash)) {
             return null; // Returnăm null dacă datele sunt incorecte
         }

@@ -19,6 +19,7 @@ public class User extends PanacheEntity {
     @Column(unique = true, nullable = false)
     public String email;
 
+    @Email(message = "Formatul email-ului este invalid")
     @Column(name = "student_email", unique = true, nullable = true)
     public String studentEmail;
 
