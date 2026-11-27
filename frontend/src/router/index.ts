@@ -95,11 +95,6 @@ const router = createRouter({
       meta: { compactSidebar: true },
       props: parseChatRouteProps('SOCIAL'),
     },
-    {
-      path: '/playground',
-      name: 'playground',
-      component: () => import('../views/PlaygroundView.vue'),
-    },
   ],
 });
 
