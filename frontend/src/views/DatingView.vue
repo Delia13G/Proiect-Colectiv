@@ -1,9 +1,11 @@
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
+import { useDatingStore } from '../stores/useDatingStore'
+import { SlidersHorizontal, Compass, PauseCircle } from 'lucide-vue-next'
 
-import DatingNavbar from '../components/dating/DatingNavbar.vue'
-import DatingSidebar from '../components/dating/DatingSidebar.vue'
 import ProfileCard from '../components/dating/ProfileCard.vue'
 import ActionButtons from '../components/dating/ActionButtons.vue'
 import FilterDrawer from '../components/dating/FilterDrawer.vue'
@@ -40,8 +42,15 @@ interface Chat {
   unread: boolean
 }
 
-// NAVIGATION
-const activePage = ref<'discovery' | 'likes' | 'chat'>('discovery')
+const route = useRoute()
+const router = useRouter()
+const datingStore = useDatingStore()
+const { matches: storeMatches, sortedChats: storeChats } = storeToRefs(datingStore)
+
+const activePage = ref<'discovery' | 'likes' | 'chat'>(
+  route.query.view === 'likes' ? 'likes' : 'discovery'
+)
+
 
 // MODALS
 const showFilters = ref(false)
@@ -325,8 +334,37 @@ function applyFilters(newFilters: typeof filters.value) {
 
 // OPEN CHAT FROM SIDEBAR
 function openChat(chatId: number) {
-  const existingChat = chats.value.find(chat => chat.id === chatId)
+  // 1. Caută în chat-urile active din store
+  const storeChat = storeChats.value.find(chat => chat.id === chatId)
+  if (storeChat) {
+    activeChat.value = {
+      id: storeChat.id,
+      name: storeChat.name,
+      image: storeChat.image,
+      message: storeChat.message,
+      unread: false
+    }
+    storeChat.unread = false
+    activePage.value = 'chat'
+    return
+  }
 
+  // 2. Caută în match-urile noi din store
+  const storeMatch = storeMatches.value.find(match => match.id === chatId)
+  if (storeMatch) {
+    activeChat.value = {
+      id: storeMatch.id,
+      name: storeMatch.name,
+      image: storeMatch.image,
+      message: 'Start a conversation...',
+      unread: false
+    }
+    activePage.value = 'chat'
+    return
+  }
+
+  // 3. Fallback pe chat-urile/match-urile locale (ex: demo match-ul cu Irina)
+  const existingChat = chats.value.find(chat => chat.id === chatId)
   if (existingChat) {
     activeChat.value = existingChat
     existingChat.unread = false
@@ -335,7 +373,6 @@ function openChat(chatId: number) {
   }
 
   const matchedUser = matches.value.find(match => match.id === chatId)
-
   if (matchedUser) {
     const newChat: Chat = {
       id: matchedUser.id,
@@ -344,7 +381,6 @@ function openChat(chatId: number) {
       message: 'Start a conversation...',
       unread: false
     }
-
     chats.value.push(newChat)
     activeChat.value = newChat
     activePage.value = 'chat'
@@ -354,7 +390,7 @@ function openChat(chatId: number) {
 // RETURN FROM CHAT
 function closeChat() {
   activeChat.value = null
-  activePage.value = 'discovery'
+  router.push({ path: '/dating' })
 }
 
 // LIKE BACK
@@ -383,7 +419,6 @@ function sendMessage() {
   if (!matchedProfile.value) return
 
   const profile = matchedProfile.value
-
   let chat = chats.value.find(item => item.id === profile.id)
 
   if (!chat) {
@@ -394,27 +429,57 @@ function sendMessage() {
       message: 'Start a conversation...',
       unread: false
     }
-
     chats.value.push(chat)
   }
 
-  activeChat.value = chat
   showMatchModal.value = false
-  activePage.value = 'chat'
+  router.push({
+    path: '/dating',
+    query: { view: 'chat', chatId: String(profile.id) }
+  })
 }
 
 function continueDiscovery() {
   showMatchModal.value = false
 }
+
+watch(
+  [
+    () => route.query.view,
+    () => route.query.chatId,
+    () => storeChats.value.length,
+    () => storeMatches.value.length
+  ],
+  ([newView, newChatId]) => {
+    if (newView === 'likes') {
+      activeChat.value = null
+      activePage.value = 'likes'
+    } else if (newView === 'chat' && newChatId) {
+      openChat(Number(newChatId))
+    } else {
+      activeChat.value = null
+      activePage.value = 'discovery'
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
-  <div class="dating-page">
+  <div class="dating-page relative min-h-full bg-[#090b18] px-6 py-5 text-white">
 
-    <DatingNavbar
-      @open-filters="showFilters = true"
-      @open-likes="activePage = 'likes'"
-    />
+    <div
+      v-if="activePage === 'discovery'"
+      class="mb-3 flex justify-end md:mb-0 md:absolute md:top-5 md:right-7 z-10"
+    >
+      <button
+        @click="showFilters = true"
+        class="flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.07] px-4 py-2.5 text-[13px] font-medium text-white transition-all duration-200 hover:border-rose-600 hover:bg-rose-600/20 cursor-pointer"
+      >
+        <SlidersHorizontal :size="18" />
+        Filters
+      </button>
+    </div>
 
     <main class="dating-layout">
 
@@ -430,16 +495,16 @@ function continueDiscovery() {
       <!-- DISCOVERY -->
       <section
         v-if="activePage === 'discovery'"
-        class="discovery-area"
+        class="mx-auto flex w-full max-w-[420px] flex-col items-center pb-8"
       >
-        <div class="discovery-heading">
+        <div class="mb-4 flex w-full items-center justify-between">
           <div>
-            <h1>Discover people</h1>
-            <p>Maybe your next connection starts here.</p>
+            <h1 class="text-xl font-bold text-white">Discover people</h1>
+            <p class="text-xs text-slate-400">Maybe your next connection starts here.</p>
           </div>
 
-          <span class="online-label">
-            <span></span>
+          <span class="flex items-center gap-2 text-xs text-slate-300">
+            <span class="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
             Dating mode
           </span>
         </div>
@@ -449,8 +514,18 @@ function continueDiscovery() {
           :profile="currentProfile"
         />
 
-        <div v-else class="empty-state">
-          <h2>
+        <div
+          v-else
+          class="mt-6 flex w-full max-w-[420px] flex-col items-center rounded-3xl border border-white/10 bg-slate-900/50 px-7 py-14 text-center shadow-2xl backdrop-blur-md"
+        >
+          <!-- Iconiță cu efect de glow -->
+          <div class="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-rose-500/20 bg-rose-500/10 text-rose-500 shadow-[0_0_25px_rgba(244,63,94,0.2)]">
+            <PauseCircle v-if="filters.isPaused" :size="30" />
+            <Compass v-else :size="30" />
+          </div>
+
+          <!-- Titlu -->
+          <h2 class="mb-2 text-xl font-bold tracking-tight text-white">
             {{
               filters.isPaused
                 ? 'Your Dating profile is paused'
@@ -458,15 +533,21 @@ function continueDiscovery() {
             }}
           </h2>
 
-          <p>
+          <!-- Subtitlu -->
+          <p class="mb-7 max-w-[280px] text-sm leading-relaxed text-slate-400">
             {{
               filters.isPaused
-                ? 'You can reactivate your profile in your filters.'
+                ? 'You can reactivate your profile anytime from your filters.'
                 : 'Try changing your preferences to discover more people.'
             }}
           </p>
 
-          <button @click="showFilters = true">
+          <!-- Buton CTA -->
+          <button
+            @click="showFilters = true"
+            class="flex items-center gap-2 rounded-xl bg-rose-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-600/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-rose-500 active:translate-y-0 cursor-pointer"
+          >
+            <SlidersHorizontal :size="16" />
             Modify Filters
           </button>
         </div>
@@ -500,6 +581,7 @@ function continueDiscovery() {
         class="chat-content"
       >
         <ChatView
+          :key="activeChat.id"
           :contact-name="activeChat.name"
           :contact-image="activeChat.image"
           @back="closeChat"
@@ -530,7 +612,7 @@ function continueDiscovery() {
   </div>
 </template>
 
-<style scoped>
+<!-- <style scoped>
 .dating-page {
   min-height: 100vh;
   background: #090b18;
@@ -542,15 +624,19 @@ function continueDiscovery() {
 .dating-layout {
   display: grid;
   grid-template-columns: 290px minmax(0, 1fr);
-  gap: 35px;
-  max-width: 1250px;
-  margin: 28px auto;
+  gap: 50px; /* Spațiu clar și elegant între sidebar și card */
+  max-width: 850px; /* SECRETUL AICI: Scăzut de la 1250px la 850px */
+  margin: 28px auto; /* Centrează întregul bloc pe mijlocul monitorului */
 }
 
 .discovery-area {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
+  max-width: 440px; /* Cardurile de dating arată mai bine puțin mai înguste */
+  margin: 0 auto; /* Acum se va centra perfect într-un spațiu logic */
+  padding-bottom: 30px;
 }
 
 .discovery-heading {
@@ -563,7 +649,7 @@ function continueDiscovery() {
 
 .discovery-heading h1 {
   font-size: 23px;
-  margin: 0 0 7px;
+  margin: 0 0 4px;
 }
 
 .discovery-heading p {
@@ -585,6 +671,7 @@ function continueDiscovery() {
   height: 8px;
   background: #22c55e;
   border-radius: 50%;
+  box-shadow: 0 0 8px rgba(34,197,94,0.6); /* NOU: Am adăugat puțin glow pe bulina verde */
 }
 
 .empty-state {
@@ -631,4 +718,4 @@ function continueDiscovery() {
     height: 600px;
   }
 }
-</style>
+</style> -->

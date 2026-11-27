@@ -1,80 +1,139 @@
-<template>
-  <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm select-none">
-    <div class="w-full max-w-md rounded-2xl bg-slate-900 border border-white/10 p-6 shadow-2xl flex flex-col gap-5">
-      <!-- Header Modal -->
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <img :src="target?.avatar" :alt="target?.name" class="w-10 h-10 rounded-xl object-cover border border-white/10" />
-          <div>
-            <h3 class="text-sm font-bold text-white">Conectare cu {{ target?.name }}</h3>
-            <p class="text-[11px] text-slate-400">{{ target?.role }}</p>
-          </div>
-        </div>
-        <button @click="close" class="text-slate-400 hover:text-white transition-colors">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
-      <!-- Textarea Pitch Message -->
-      <div class="flex flex-col gap-2">
-        <label class="text-xs font-semibold text-slate-300">Mesaj de prezentare / Pitch (opțional):</label>
-        <textarea
-          v-model="pitchMessage"
-          rows="3"
-          placeholder="Salut! Aș vrea să discutăm despre o colaborare pe proiect..."
-          class="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/40 resize-none transition-all"
-        ></textarea>
-      </div>
-
-      <!-- Acțiuni -->
-      <div class="flex items-center justify-end gap-3 pt-2 border-t border-white/10">
-        <button
-          type="button"
-          @click="close"
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition-all"
-        >
-          Anulează
-        </button>
-        <button
-          type="button"
-          @click="handleSend"
-          :disabled="isSubmitting"
-          class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-[0_0_12px_rgba(79,70,229,0.4)] disabled:opacity-60 transition-all flex items-center gap-2"
-        >
-          <span v-if="isSubmitting" class="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-          <span>{{ isSubmitting ? 'Se trimite...' : 'Trimite solicitarea' }}</span>
-        </button>
-      </div>
-    </div>
-  </div>
-</template>
-
+<!-- frontend/src/components/pro/ConnectModal.vue -->
 <script setup lang="ts">
-import { ref } from 'vue';
-import type { Talent } from '../../services/proService';
+import { ref, watch } from 'vue';
+import { X, Send, UserPlus } from 'lucide-vue-next';
 
+// Definim proprietățile pe care le primim de la ProExploreView
 const props = defineProps<{
   isOpen: boolean;
-  target: Talent | null;
+  target: any | null; // Studentul selectat
   isSubmitting: boolean;
 }>();
 
+// Definim evenimentele pe care le trimitem înapoi către părinte
 const emit = defineEmits<{
   (e: 'close'): void;
-  (e: 'submit', message: string): void;
+  (e: 'submit', pitchMessage: string): void;
 }>();
 
+// Mesajul scris de utilizator
 const pitchMessage = ref('');
 
-function close() {
-  pitchMessage.value = '';
-  emit('close');
+// Când modalul se închide sau deschide, resetăm câmpul de text
+watch(() => props.isOpen, (newVal) => {
+  if (newVal) {
+    pitchMessage.value = '';
+  }
+});
+
+// Trimitem mesajul către componenta părinte
+const handleSubmit = () => {
+  if (pitchMessage.value.trim().length === 0) return;
+  emit('submit', pitchMessage.value);
+};
+</script>
+
+<template>
+  <transition name="modal">
+    <!-- Overlay întunecat care acoperă tot ecranul -->
+    <div 
+      v-if="isOpen" 
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4"
+      @click.self="emit('close')"
+    >
+      <!-- Cutia Modalului -->
+      <div 
+        class="bg-slate-900 border border-slate-700/50 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col"
+        role="dialog" 
+        aria-modal="true"
+      >
+        <!-- HEADER MODAL -->
+        <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-800/30">
+          <div class="flex items-center gap-2">
+            <UserPlus class="text-indigo-400" :size="20" />
+            <h2 class="text-lg font-bold text-white">Trimite Solicitare</h2>
+          </div>
+          <button 
+            @click="emit('close')" 
+            class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-700 transition-colors outline-none cursor-pointer"
+          >
+            <X :size="20" />
+          </button>
+        </div>
+
+        <!-- CONȚINUT MODAL -->
+        <div class="p-6">
+          <p class="text-sm text-slate-300 mb-4">
+            Trimite un scurt mesaj de prezentare (pitch) către 
+            <strong class="text-white">{{ target?.name }}</strong> 
+            pentru a iniția o colaborare.
+          </p>
+          
+          <div class="flex items-center gap-3 p-3 bg-slate-800/50 rounded-xl border border-white/5 mb-5">
+            <img :src="target?.avatar" class="w-10 h-10 rounded-full object-cover" />
+            <div>
+              <p class="text-sm font-bold text-white">{{ target?.name }}</p>
+              <p class="text-xs text-indigo-400 font-medium">{{ target?.role }}</p>
+            </div>
+          </div>
+
+          <textarea 
+            v-model="pitchMessage"
+            rows="4"
+            placeholder="Salut! Lucrez la un proiect în Quarkus și am observat că ai experiență. Ți-ar plăcea să colaborăm?"
+            class="w-full bg-slate-950/50 border border-slate-700 rounded-xl p-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none transition-all"
+          ></textarea>
+        </div>
+
+        <!-- FOOTER MODAL (Butoane) -->
+        <div class="px-6 py-4 border-t border-slate-800 flex justify-end gap-3 bg-slate-800/20">
+          <button 
+            @click="emit('close')"
+            :disabled="isSubmitting"
+            class="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700 transition-colors outline-none cursor-pointer disabled:opacity-50"
+          >
+            Anulează
+          </button>
+          
+          <button 
+            @click="handleSubmit"
+            :disabled="isSubmitting || pitchMessage.trim().length === 0"
+            class="px-5 py-2 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-all shadow-[0_0_15px_rgba(79,70,229,0.3)] flex items-center gap-2 outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <!-- Spinner dacă e în curs de trimitere -->
+            <svg v-if="isSubmitting" class="animate-spin -ml-1 mr-1 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <Send v-else :size="16" />
+            
+            {{ isSubmitting ? 'Se trimite...' : 'Trimite Pitch' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </transition>
+</template>
+
+<style scoped>
+/* Animație pentru apariția Modalului */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.2s ease;
 }
 
-function handleSend() {
-  emit('submit', pitchMessage.value);
-  pitchMessage.value = '';
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
 }
-</script>
+
+.modal-enter-active > div,
+.modal-leave-active > div {
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal-enter-from > div,
+.modal-leave-to > div {
+  transform: scale(0.95) translateY(10px);
+}
+</style>

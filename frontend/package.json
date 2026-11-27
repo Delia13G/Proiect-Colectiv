@@ -13,14 +13,13 @@
     "@primevue/themes": "^4.5.4",
     "@vueuse/core": "^15.0.0",
     "axios": "^1.21.0",
+    "browser-image-compression": "^2.0.2",
     "lucide-vue-next": "^1.0.0",
     "pinia": "^4.1.0",
     "primevue": "^4.5.5",
     "vue": "^3.5.44",
     "vue-router": "^5.4.0",
-    "@primevue/themes": "^4.5.4",
-    "primevue": "^4.5.5",
-    "vue": "^3.5.44"
+    "vue3-emoji-picker": "^2.1.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
