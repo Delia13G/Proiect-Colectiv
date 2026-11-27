@@ -1,22 +1,20 @@
 <!-- frontend/src/views/ProView.vue -->
 <script setup lang="ts">
-import { computed } from 'vue';
 import { useRoute } from 'vue-router';
-// Aici vom putea adăuga funcționalități specifice mediului PRO pe viitor
+
+const route = useRoute();
 </script>
 
 <template>
-  <!-- Acest container ocupă tot spațiul lăsat liber de Sidebar și TopNavbar din App.vue -->
-  <div class="h-full w-full flex flex-col relative overflow-hidden bg-slate-950">
-    
-    <!-- Aici Vue Router va injecta DINAMIC fie ChatListView, fie MainChatView -->
-    <!-- Funcție de URL (/pro sau /pro/chat/1) -->
+  <div
+    class="h-full w-full flex flex-col relative bg-slate-950"
+    :class="route.meta.compactSidebar ? 'overflow-hidden' : 'overflow-y-auto'"
+  >
     <router-view v-slot="{ Component }">
       <transition name="page-fade" mode="out-in">
         <component :is="Component" />
       </transition>
     </router-view>
-    
   </div>
 </template>
 

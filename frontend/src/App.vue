@@ -1,15 +1,19 @@
+<!-- frontend/src/App.vue -->
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import TopNavBar from './components/layout/TopNavBar.vue';
 import NavigationSidebar from './components/layout/NavigationSidebar.vue';
+import { getChatRouteNameForLens } from './utils/lensTheme';
+import type { ChatLens } from './components/chat/ChatListView.vue';
 
 const route = useRoute();
 const router = useRouter();
 
 const hideLayout = computed(() => route.meta.hideLayout === true);
+const isCompactLayout = computed(() => route.meta.compactSidebar === true);
 
-const activeLens = computed<'PRO' | 'SOCIAL' | 'DATE'>(() => {
+const activeLens = computed<ChatLens>(() => {
   if (route.path.includes('/social')) return 'SOCIAL';
   if (route.path.includes('/dating')) return 'DATE';
   return 'PRO';
@@ -24,43 +28,37 @@ const handleOpenLikes = () => {
   }
 };
 
-// Deschide chat-ul selectat din sidebar în funcție de lentila activă
+// Deschide chat-ul selectat din sidebar în Split-View pe lentila activă
 const handleOpenChat = (chatId: number, lens: string) => {
-  if (lens === 'DATE') {
-    router.push({
-      path: '/dating',
-      query: { view: 'chat', chatId: String(chatId) }
-    });
-  } else if (lens === 'PRO') {
-    router.push({
-      name: 'chat-detail',
-      params: { id: chatId },
-      query: { lens: 'PRO' }
-    });
-  } else if (lens === 'SOCIAL') {
-    router.push({
-      path: '/social',
-      query: { view: 'chat', chatId: String(chatId) }
-    });
-  }
+  const normalizedLens: ChatLens =
+    lens === 'SOCIAL' || lens === 'DATE' ? lens : 'PRO';
+
+  router.push({
+    name: getChatRouteNameForLens(normalizedLens),
+    params: { id: String(chatId) },
+  });
 };
 </script>
 
 <template>
-  <div class="flex h-screen w-full bg-slate-950 text-white overflow-hidden selection:bg-indigo-500/30">
-    
-    <NavigationSidebar 
-      v-if="!hideLayout"
-      class="hidden md:flex shrink-0" 
-      :activeLens="activeLens"
-      @open-likes="handleOpenLikes"
-      @open-chat="handleOpenChat"
-    />
+  <div class="flex flex-col h-screen w-full bg-slate-950 text-white overflow-hidden selection:bg-indigo-500/30">
+    <!-- TOPBAR PE TOATĂ LĂȚIMEA ECRANULUI -->
+    <TopNavBar v-if="!hideLayout" class="w-full shrink-0 z-30" />
 
-    <div class="flex-1 flex flex-col h-full min-w-0 relative">
-      <TopNavBar v-if="!hideLayout" class="shrink-0" />
+    <!-- CORPUL APLICAȚIEI (SUB TOPBAR): SIDEBAR + CONȚINUT PRINCIPAL -->
+    <div class="flex-1 flex min-h-0 w-full overflow-hidden">
+      <NavigationSidebar
+        v-if="!hideLayout"
+        class="hidden md:flex shrink-0"
+        :activeLens="activeLens"
+        @open-likes="handleOpenLikes"
+        @open-chat="handleOpenChat"
+      />
 
-      <main class="flex-1 overflow-y-auto relative bg-slate-950">
+      <main
+        class="flex-1 min-w-0 h-full relative bg-slate-950"
+        :class="isCompactLayout ? 'overflow-hidden' : 'overflow-y-auto'"
+      >
         <router-view v-slot="{ Component }">
           <transition name="page-fade" mode="out-in">
             <component :is="Component" :activeLens="activeLens" />
@@ -68,7 +66,6 @@ const handleOpenChat = (chatId: number, lens: string) => {
         </router-view>
       </main>
     </div>
-
   </div>
 </template>
 
