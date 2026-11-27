@@ -3,7 +3,7 @@
 import { ref, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useProStore } from '../../stores/useProStore';
-import { Briefcase, Users, Code, ChevronRight } from 'lucide-vue-next';
+import { Briefcase, Code, ChevronRight } from 'lucide-vue-next';
 import ConnectModal from './ConnectModal.vue'; // Asigură-te că acest fișier există în același folder
 
 // 1. Conectăm magazinul Pinia

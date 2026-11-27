@@ -68,7 +68,7 @@ const sortedTeamChats = computed(() => {
       id: Number(chat.id),
       name: chat.name,
       message: chat.message,
-      avatar: chat.avatar ?? '',
+      avatar: '',
       unreadCount: chat.unread,
       timestamp: chat.timestamp,
       role: resolveProCardRole(profile?.role, chat.isGroup),
@@ -334,7 +334,7 @@ const openChat = (chatId: number) => {
             :key="chat.id"
             :id="chat.id"
             :name="chat.name"
-            :message="chat.message"
+            :message="chat.message ?? ''"
             :avatar="chat.avatar"
             :unreadCount="chat.unreadCount"
             :timestamp="chat.timestamp"

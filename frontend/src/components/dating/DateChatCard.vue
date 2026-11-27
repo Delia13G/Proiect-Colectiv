@@ -51,7 +51,7 @@ const cardRef = ref<HTMLElement | null>(null);
 const isSwiped = ref(false);
 
 useSwipe(cardRef, {
-  onSwipeEnd(e, direction) {
+  onSwipeEnd(_e, direction) {
     if (direction === 'left') {
       isSwiped.value = true;
     } else if (direction === 'right') {
